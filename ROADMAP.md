@@ -29,26 +29,17 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 ## Estado actual
 
 - **Fecha de inicio**: 2026-04-28
-- **Fase activa**: A — Architect
-- **Paso activo**: A.4 — Diagrama de arquitectura (esqueleto ya en `docs/architecture.md`, falta diagrama formal y flujos)
-- **Próxima acción concreta**: completar `docs/architecture.md` con flujos paso a paso de tareas tipo, y opcionalmente comenzar A.5 (prototipo Computer Use).
-- **Última sesión**: 2026-04-28, cierre de A.1, A.2 y A.3 — repo `allai-os/allai-os` registrado, dominio `allai-os.org` registrado, 8 ADRs aceptados, commit inicial creado localmente. Push pendiente por verificación SSH de GitHub.
+- **Fase activa**: A — Architect (último paso pendiente: ejecución del prototipo)
+- **Paso activo**: A.5 — Prototipo de viabilidad. Código completo escrito en `agent/prototype/`. **Pendiente: que Juan Manuel lo ejecute en una VM Fedora.**
+- **Próxima acción concreta**: arrancar VM Fedora 41+ → correr `agent/prototype/setup_vm.sh` → `python run.py --provider claude --benchmark` y `--provider ollama --benchmark`. Anotar resultados en `docs/prototype-results.md`.
+- **Última sesión**: 2026-04-28, cierre de A.1, A.2, A.3 (push exitoso tras autenticar SSH), A.4 (architecture.md con diagramas Mermaid + 6 flujos paso a paso) y código de A.5 listo.
 - **Pendientes externos del usuario**:
   - [x] Dominio `allai-os.org` registrado.
-  - [x] Repo GitHub `git@github.com:allai-os/allai-os.git` creado.
-  - [ ] Resolver host key SSH para que push funcione (ver `Notas de sesión` abajo).
+  - [x] Repo GitHub `git@github.com:allai-os/allai-os.git` creado y push exitoso (rebase con commit inicial de GitHub resuelto a favor de nuestro LICENSE).
   - [ ] Configurar MX/email para `security@allai-os.org` y `conduct@allai-os.org`.
   - [ ] Investigar trademark de "allAI OS" cuando aplique.
   - [ ] (Opcional) Configurar git global con `user.name` y `user.email` para no tener que pasarlos en cada commit.
-
-## Notas de sesión 2026-04-28
-
-- Commit inicial creado: `36bd0f2 chore: estructura inicial del proyecto allAI OS` en branch `main`. DCO sign-off con email del autor.
-- `git push -u origin main` falla con `Host key verification failed`. Causas posibles: la máquina nunca ha conectado a `github.com` por SSH, o el `~/.ssh/known_hosts` no contiene su fingerprint.
-- Soluciones (Juan Manuel decide):
-  1. **Aceptar la fingerprint manualmente**: `ssh -T git@github.com` y responder `yes`.
-  2. **Agregar la fingerprint oficial conocida de GitHub** a `~/.ssh/known_hosts` (Claude puede hacerlo si autorizas).
-  3. **Cambiar el remote a HTTPS** con un Personal Access Token: `git remote set-url origin https://github.com/allai-os/allai-os.git`.
+  - [ ] **Ejecutar prototipo A.5 en VM Fedora** y registrar resultados.
 
 ---
 
@@ -98,11 +89,12 @@ Los 8 ADRs están aceptados y publicados en [`docs/adr/`](docs/adr/):
 - [x] [ADR-007](docs/adr/0007-tooling-empaquetado.md): RPMs en COPR, imagen OCI en ghcr.io firmada con cosign, ISO con livemedia-creator.
 - [x] [ADR-008](docs/adr/0008-telemetria.md): opt-in estricto, granular, anonimizada, autohospedada, sin trackers comerciales.
 
-## A.3 — Inicialización del repositorio `[~]` (en curso 2026-04-28)
+## A.3 — Inicialización del repositorio `[x]` (cerrada 2026-04-28)
 
 **Tiempo: 1 día**
 
-- [x] `git init` en `c:\JM\PROGRAMMING\allAI-OS` y primer commit (`36bd0f2`, branch `main`, DCO sign-off).
+- [x] `git init` en `c:\JM\PROGRAMMING\allAI-OS`, primer commit con DCO sign-off.
+- [x] Push inicial a `git@github.com:allai-os/allai-os.git` exitoso (tras rebase para integrar el commit inicial automático que GitHub crea con el LICENSE template).
 - [x] Estructura de carpetas creada según el plan (con README en cada subcarpeta).
 - [ ] Push inicial a GitHub (bloqueado por host key SSH — ver `Notas de sesión`).
 - [ ] Configurar branch protection en `main` (tras primer push exitoso).
@@ -147,37 +139,36 @@ Plan de carpetas (referencia, ya materializada):
   └── .github/
       └── workflows/
   ```
-- [ ] Configurar `.gitignore`, `.editorconfig`, `pre-commit` con hooks (ruff, black, gitleaks).
-- [ ] Subir a GitHub bajo `allai-os/allai-os`.
-- [ ] Configurar branch protection en `main`, requerir PRs, signed commits.
+- [x] `.gitignore` y `.editorconfig` creados.
+- [ ] `pre-commit` con hooks (ruff, gitleaks, etc.) — pendiente cuando llegue código real (fase Link).
+- [x] Subido a GitHub `allai-os/allai-os`.
+- [ ] Configurar branch protection en `main` (requiere PRs, signed commits) — **acción del usuario en GitHub UI**.
 
-## A.4 — Diagrama de arquitectura `[ ]`
+## A.4 — Diagrama de arquitectura `[x]` (cerrada 2026-04-28)
 
 **Tiempo: 1-2 días**
 
-- [ ] Crear `docs/architecture.md` con diagrama (Mermaid o Excalidraw exportado) de los componentes:
-  - Usuario → Overlay UI / Voz / CLI
-  - → `allaid` (daemon, Rust)
-  - → Agent Core (Python)
-  - → Provider Router → {Claude API, Ollama local, futuros}
-  - → Tool Executor (sandboxed)
-  - → Sistema (Wayland compositor, shell, fs, browser via CDP)
-  - ← Audit Log + Permission Prompts
-- [ ] Documentar flujos: "abrir Firefox y buscar X", "leer este archivo y resumir", "instalar paquete".
-- [ ] Identificar puntos de fallo y cómo se manejan.
+- [x] `docs/architecture.md` completo con:
+  - Diagrama de sistema en Mermaid (frontends, daemon, agent core, providers, tools, hardware).
+  - Diagrama de capas (7 capas, de hardware a interfaces de usuario).
+  - Diagrama de secuencia de una tarea típica.
+  - Diagrama de pipeline de seguridad por acción.
+- [x] 6 flujos paso a paso documentados: abrir Firefox + buscar, leer PDF, instalar paquete, enviar mensaje a tercero (caso sensible), conectar VPN (gate de credenciales), modo offline.
+- [x] Modos de operación enumerados (Trust / Always ask / Paranoid / Demo / Offline / Privacy).
 
-## A.5 — Prototipo de viabilidad ("Computer Use Hello World") `[ ]`
+## A.5 — Prototipo de viabilidad ("Computer Use Hello World") `[~]` (código listo 2026-04-28, pendiente ejecución)
 
 **Tiempo: 3-4 días**
 
-- [ ] En una VM Fedora Workstation limpia, escribir un script Python que:
-  - [ ] Tome un screenshot de la pantalla.
-  - [ ] Lo envíe a Claude API con el tool `computer_20250124`.
-  - [ ] Reciba acciones (click, type, key) y las ejecute con `pyautogui` o `ydotool`.
-  - [ ] Loop hasta completar tarea: "abre Firefox y busca 'allAI OS'".
-- [ ] Repetir con Ollama + Qwen2.5-VL local: usar el mismo loop pero con un parser propio (Ollama todavía no tiene tool-use idéntico, hay que estructurar la respuesta).
-- [ ] Documentar latencia, precisión y costos en `docs/prototype-results.md`.
-- [ ] **Criterio de éxito**: completar 7/10 tareas simples sin intervención. Si falla, replanificar (no es bloqueante para seguir, pero ajusta expectativas).
+- [x] Script Python con loop de Computer Use vs Claude (`agent/prototype/claude_loop.py`): screenshot → tool `computer_20250124` → ejecutar acción → repetir.
+- [x] Loop equivalente con Ollama + modelo de visión (`agent/prototype/ollama_loop.py`): respuesta JSON estructurada con parser heurístico.
+- [x] Tools compartidos (`agent/prototype/tools.py`): mss para screenshot, pyautogui para input, subprocess para shell/launch.
+- [x] Entrypoint `agent/prototype/run.py` con CLI: `--provider claude|ollama`, `--task "..."`, `--benchmark`.
+- [x] 10 tareas de evaluación definidas en `BENCHMARK_TASKS`.
+- [x] Script `setup_vm.sh` para instalar dependencias en Fedora.
+- [x] Plantilla `docs/prototype-results.md` para registrar corridas.
+- [ ] **Pendiente del usuario**: ejecutar en VM, completar `docs/prototype-results.md`.
+- **Criterio de éxito**: completar 7/10 tareas simples sin intervención. Si falla, replanificar (no es bloqueante para seguir, pero ajusta expectativas).
 
 ---
 
