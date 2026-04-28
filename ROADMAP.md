@@ -30,9 +30,9 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 
 - **Fecha de inicio**: 2026-04-28
 - **Fase activa**: L — Link
-- **Paso activo**: L.2 — Router inteligente (siguiente).
-- **Próxima acción concreta**: implementar `agent/core/router.py` que decide entre Claude y Ollama según política, tarea, costo, red y privacidad, con fallback automático.
-- **Última sesión**: 2026-04-28. En paralelo: A.5 con código listo (pendiente que Juan Manuel ejecute en VM Fedora). L.1 completa con 35 tests pasando.
+- **Paso activo**: L.3 — Tool registry (siguiente).
+- **Próxima acción concreta**: definir `agent/tools/manifest.yaml` y los wrappers de cada tool (screen, mouse, keyboard, shell, fs, app, browser, clipboard, notify) con schema, ejecutor y nivel de riesgo.
+- **Última sesión**: 2026-04-28. L.1 (provider abstraction) y L.2 (router) cerrados con 77 tests pasando. A.5 código listo, pendiente ejecución en VM.
 - **Pendientes externos del usuario**:
   - [x] Dominio `allai-os.org` registrado.
   - [x] Repo GitHub `git@github.com:allai-os/allai-os.git` creado y push exitoso (rebase con commit inicial de GitHub resuelto a favor de nuestro LICENSE).
@@ -191,18 +191,16 @@ Plan de carpetas (referencia, ya materializada):
 - [x] **35 tests unitarios pasando** con mocks (sin red): codificación de blocks, traducción de responses, prompt caching, beta de Computer Use, fallbacks, parser JSON anidado.
 - [ ] Tests de integración con red real — pendiente para cuando Juan Manuel ejecute en VM con `ANTHROPIC_API_KEY` y `ollama serve`.
 
-## L.2 — Router inteligente `[ ]`
+## L.2 — Router inteligente `[x]` (cerrada 2026-04-28)
 
 **Tiempo: 3-4 días**
 
-- [ ] `agent/core/router.py`: decide qué provider usar según:
-  - Política del usuario (preferencia: cloud / local / auto).
-  - Tipo de tarea (computer use → Claude, resumen rápido → local).
-  - Disponibilidad de red.
-  - Cuota/costo restante.
-  - Privacidad de los datos (regex de detección de PII → forzar local).
-- [ ] Fallback automático: si Claude falla → Ollama.
-- [ ] Telemetría local de decisiones (sin enviar a ningún lado, solo para debug del usuario).
+- [x] `agent/core/policy.py` — `RoutingMode` (auto/cloud_first/local_first/cloud_only/local_only), `RoutingPolicy` con flags de PII/visión/computer_use/preferencias por sesión, `CostBudget` con tope mensual/sesión.
+- [x] `agent/core/privacy.py` — detector de PII (email, teléfono, tarjeta con Luhn, claves API conocidas, claves PEM, password fields, IDs nacionales). Snippets redactados.
+- [x] `agent/core/task_classifier.py` — `TaskKind` (computer_use, vision, tool_chain, plain_chat) inferido de la forma de la `ChatRequest`. `TaskHints` para overrides por mensaje.
+- [x] `agent/core/router.py` — `Router` con `route()` (decisión pura) y `chat()` / `chat_stream()` con fallback automático. PII y hints fuerzan local. Errores de auth/rate-limit propagan inmediatamente; sólo `ProviderUnavailableError` activa fallback. Selección de modelo por capabilities + costo (Haiku > Opus para tareas simples, Opus para Computer Use).
+- [x] **42 tests nuevos** (77 totales): privacidad, clasificación, fallback, presupuesto agotado, modelo preferido respetado o saltado por capabilities, no fallback en errores de auth.
+- [ ] Telemetría local de decisiones — pendiente (audit log de fase Launch lo cubrirá).
 
 ## L.3 — Tool registry `[ ]`
 

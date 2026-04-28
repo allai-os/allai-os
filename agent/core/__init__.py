@@ -27,7 +27,16 @@ from core.messages import (
     ToolUseStart,
     Usage,
 )
+from core.policy import CostBudget, RoutingMode, RoutingPolicy
+from core.privacy import PIIKind, PIIMatch, detect_pii, detect_pii_in_messages
 from core.provider import ModelInfo, Provider, ProviderCapabilities
+from core.router import (
+    NoProviderAvailableError,
+    Router,
+    RoutingCandidate,
+    RoutingDecision,
+)
+from core.task_classifier import TaskHints, TaskKind, TaskProfile, classify
 
 __all__ = [
     "AuthenticationError",
@@ -35,19 +44,31 @@ __all__ = [
     "ChatResponse",
     "ComputerUseTool",
     "ContentBlock",
+    "CostBudget",
     "ImageBlock",
     "InvalidRequestError",
     "Message",
     "MessageStop",
     "ModelInfo",
+    "NoProviderAvailableError",
+    "PIIKind",
+    "PIIMatch",
     "Provider",
     "ProviderCapabilities",
     "ProviderError",
     "ProviderUnavailableError",
     "RateLimitError",
     "Role",
+    "Router",
+    "RoutingCandidate",
+    "RoutingDecision",
+    "RoutingMode",
+    "RoutingPolicy",
     "StopReason",
     "StreamEvent",
+    "TaskHints",
+    "TaskKind",
+    "TaskProfile",
     "TextBlock",
     "TextDelta",
     "Tool",
@@ -56,4 +77,7 @@ __all__ = [
     "ToolUseDelta",
     "ToolUseStart",
     "Usage",
+    "classify",
+    "detect_pii",
+    "detect_pii_in_messages",
 ]
