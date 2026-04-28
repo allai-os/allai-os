@@ -29,10 +29,10 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 ## Estado actual
 
 - **Fecha de inicio**: 2026-04-28
-- **Fase activa**: A — Architect (último paso pendiente: ejecución del prototipo)
-- **Paso activo**: A.5 — Prototipo de viabilidad. Código completo escrito en `agent/prototype/`. **Pendiente: que Juan Manuel lo ejecute en una VM Fedora.**
-- **Próxima acción concreta**: arrancar VM Fedora 41+ → correr `agent/prototype/setup_vm.sh` → `python run.py --provider claude --benchmark` y `--provider ollama --benchmark`. Anotar resultados en `docs/prototype-results.md`.
-- **Última sesión**: 2026-04-28, cierre de A.1, A.2, A.3 (push exitoso tras autenticar SSH), A.4 (architecture.md con diagramas Mermaid + 6 flujos paso a paso) y código de A.5 listo.
+- **Fase activa**: L — Link
+- **Paso activo**: L.2 — Router inteligente (siguiente).
+- **Próxima acción concreta**: implementar `agent/core/router.py` que decide entre Claude y Ollama según política, tarea, costo, red y privacidad, con fallback automático.
+- **Última sesión**: 2026-04-28. En paralelo: A.5 con código listo (pendiente que Juan Manuel ejecute en VM Fedora). L.1 completa con 35 tests pasando.
 - **Pendientes externos del usuario**:
   - [x] Dominio `allai-os.org` registrado.
   - [x] Repo GitHub `git@github.com:allai-os/allai-os.git` creado y push exitoso (rebase con commit inicial de GitHub resuelto a favor de nuestro LICENSE).
@@ -178,21 +178,18 @@ Plan de carpetas (referencia, ya materializada):
 
 **Duración estimada: 3-4 semanas**
 
-## L.1 — Provider abstraction `[ ]`
+## L.1 — Provider abstraction `[x]` (cerrada 2026-04-28)
 
 **Tiempo: 4-5 días**
 
-- [ ] Definir interfaz `Provider` en `agent/core/provider.py` con métodos: `chat`, `chat_stream`, `vision_chat`, `tool_use`, `compute_use`, `capabilities()`.
-- [ ] Implementar `ClaudeProvider` (`agent/providers/claude.py`):
-  - Modelos: `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001`.
-  - Prompt caching habilitado por defecto.
-  - Computer Use tool integrado.
-  - Streaming.
-- [ ] Implementar `OllamaProvider` (`agent/providers/ollama.py`):
-  - Detectar modelos instalados localmente.
-  - Soporte vision (Qwen2.5-VL, Llama3.2-Vision, MiniCPM-V).
-  - Adaptar tool-use al formato JSON de Ollama.
-- [ ] Tests unitarios para cada provider con mocks + tests de integración con cuotas mínimas.
+- [x] `agent/core/messages.py` — tipos provider-agnostic (Message, ContentBlock, ChatRequest/Response, Tool, ComputerUseTool, StreamEvent, Usage).
+- [x] `agent/core/provider.py` — interfaz `Provider` (ABC) con `capabilities`, `is_available`, `chat`, `chat_stream`. `ProviderCapabilities` y `ModelInfo` describen qué soporta cada uno.
+- [x] `agent/core/errors.py` — `ProviderError`, `AuthenticationError`, `RateLimitError`, `InvalidRequestError`, `ProviderUnavailableError`.
+- [x] `agent/providers/claude.py` — los 3 modelos (Opus 4.7, Sonnet 4.6, Haiku 4.5), prompt caching automático en system+tools, Computer Use con beta header, streaming traducido a `StreamEvent`.
+- [x] `agent/providers/ollama.py` — detección de modelos via `ollama.list()`, vision por nombre, tool-use nativo (Qwen/Llama 3+) o emulado (parser JSON balanceado), Computer Use emulado.
+- [x] `agent/pyproject.toml` — ruff + mypy strict + pytest configurados (ADR-001).
+- [x] **35 tests unitarios pasando** con mocks (sin red): codificación de blocks, traducción de responses, prompt caching, beta de Computer Use, fallbacks, parser JSON anidado.
+- [ ] Tests de integración con red real — pendiente para cuando Juan Manuel ejecute en VM con `ANTHROPIC_API_KEY` y `ollama serve`.
 
 ## L.2 — Router inteligente `[ ]`
 
