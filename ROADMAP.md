@@ -30,15 +30,25 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 
 - **Fecha de inicio**: 2026-04-28
 - **Fase activa**: A — Architect
-- **Paso activo**: A.2 — Stack tecnológico y ADRs
-- **Próxima acción concreta**: redactar ADR-001 a ADR-008 usando `docs/adr/0000-template.md`.
-- **Última sesión**: 2026-04-28, creación del roadmap + cierre de A.1 (licencia Apache 2.0, gobernanza BDFL, COC, contributing, security, ética IA, estructura del repo).
-- **Pendientes externos del usuario** (no bloquean trabajo técnico):
-  - Registrar dominio `allai-os.org` (o el que prefieras).
-  - Crear GitHub org `allai-os` y repo `allai-os/allai-os`.
-  - Investigar trademark básico del nombre "allAI OS" en jurisdicciones relevantes.
-  - Configurar email `security@allai-os.org` y `conduct@allai-os.org`.
-  - Decidir si quieres que ejecute `git init` aquí localmente o si prefieres crear primero el repo en GitHub y clonar.
+- **Paso activo**: A.4 — Diagrama de arquitectura (esqueleto ya en `docs/architecture.md`, falta diagrama formal y flujos)
+- **Próxima acción concreta**: completar `docs/architecture.md` con flujos paso a paso de tareas tipo, y opcionalmente comenzar A.5 (prototipo Computer Use).
+- **Última sesión**: 2026-04-28, cierre de A.1, A.2 y A.3 — repo `allai-os/allai-os` registrado, dominio `allai-os.org` registrado, 8 ADRs aceptados, commit inicial creado localmente. Push pendiente por verificación SSH de GitHub.
+- **Pendientes externos del usuario**:
+  - [x] Dominio `allai-os.org` registrado.
+  - [x] Repo GitHub `git@github.com:allai-os/allai-os.git` creado.
+  - [ ] Resolver host key SSH para que push funcione (ver `Notas de sesión` abajo).
+  - [ ] Configurar MX/email para `security@allai-os.org` y `conduct@allai-os.org`.
+  - [ ] Investigar trademark de "allAI OS" cuando aplique.
+  - [ ] (Opcional) Configurar git global con `user.name` y `user.email` para no tener que pasarlos en cada commit.
+
+## Notas de sesión 2026-04-28
+
+- Commit inicial creado: `36bd0f2 chore: estructura inicial del proyecto allAI OS` en branch `main`. DCO sign-off con email del autor.
+- `git push -u origin main` falla con `Host key verification failed`. Causas posibles: la máquina nunca ha conectado a `github.com` por SSH, o el `~/.ssh/known_hosts` no contiene su fingerprint.
+- Soluciones (Juan Manuel decide):
+  1. **Aceptar la fingerprint manualmente**: `ssh -T git@github.com` y responder `yes`.
+  2. **Agregar la fingerprint oficial conocida de GitHub** a `~/.ssh/known_hosts` (Claude puede hacerlo si autorizas).
+  3. **Cambiar el remote a HTTPS** con un Personal Access Token: `git remote set-url origin https://github.com/allai-os/allai-os.git`.
 
 ---
 
@@ -73,27 +83,32 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 - [x] `docs/AI_ETHICS.md` creado: principios fundamentales, 12 reglas absolutas, defensas contra prompt injection, bienestar del usuario.
 - [x] Documentos adicionales creados en la sesión: `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `.gitignore`, `.editorconfig`, plantilla ADR, esqueleto `docs/architecture.md`, READMEs de subdirectorios (`agent/`, `desktop/`, `system/`, `distro/`, `installer/`, `website/`).
 
-## A.2 — Stack tecnológico y ADRs `[ ]`
+## A.2 — Stack tecnológico y ADRs `[x]` (cerrada 2026-04-28)
 
 **Tiempo: 2 días**
 
-Crear `docs/adr/` con un Architecture Decision Record por cada decisión clave:
+Los 8 ADRs están aceptados y publicados en [`docs/adr/`](docs/adr/):
 
-- [ ] **ADR-001**: Lenguaje del agente core → **Python 3.12+** (ecosistema de IA, pyautogui, anthropic SDK, ollama-python). Rust para componentes críticos de performance/seguridad.
-- [ ] **ADR-002**: Base de distro → **Fedora Workstation 41+** con **rpm-ostree** (atomic, rollback, estilo Universal Blue/Bluefin). Justifica vs Workstation tradicional.
-- [ ] **ADR-003**: Servidor gráfico → **Wayland primario**, X11 como fallback opcional. Automatización vía `libei` + `xdg-desktop-portal-remotedesktop`.
-- [ ] **ADR-004**: IPC → **D-Bus** para comunicación entre el daemon del agente y la UI/extensiones.
-- [ ] **ADR-005**: Sandboxing → **bubblewrap** (mismo motor que Flatpak) por defecto, opción de `firejail` para usuarios avanzados.
-- [ ] **ADR-006**: Modelo de permisos → polkit + sistema propio de capacidades por sesión + audit log inmutable.
-- [ ] **ADR-007**: Tooling de empaquetado → **kickstart + lorax + pungi** (cadena oficial Fedora) para ISO; **rpm-ostree compose** para imagen atómica.
-- [ ] **ADR-008**: Telemetría → **opt-in estricto**, anonimizada, autohospedada (Plausible o nada).
+- [x] [ADR-001](docs/adr/0001-lenguaje-agente-core.md): Python 3.12+ para agente core, Rust para componentes de sistema.
+- [x] [ADR-002](docs/adr/0002-base-distro.md): Fedora Silverblue 41+ con imagen OCI estilo Universal Blue/Bluefin.
+- [x] [ADR-003](docs/adr/0003-servidor-grafico.md): Wayland primario, libei + portales para automatización; AT-SPI cuando se pueda.
+- [x] [ADR-004](docs/adr/0004-ipc.md): D-Bus en el session bus, interfaz `org.allai.Agent1`.
+- [x] [ADR-005](docs/adr/0005-sandboxing.md): bubblewrap + SELinux policy custom + seccomp.
+- [x] [ADR-006](docs/adr/0006-modelo-permisos.md): polkit + capability system + gates por acción + audit log firmado + kill-switch.
+- [x] [ADR-007](docs/adr/0007-tooling-empaquetado.md): RPMs en COPR, imagen OCI en ghcr.io firmada con cosign, ISO con livemedia-creator.
+- [x] [ADR-008](docs/adr/0008-telemetria.md): opt-in estricto, granular, anonimizada, autohospedada, sin trackers comerciales.
 
-## A.3 — Inicialización del repositorio `[ ]`
+## A.3 — Inicialización del repositorio `[~]` (en curso 2026-04-28)
 
 **Tiempo: 1 día**
 
-- [ ] `git init` en `c:\JM\PROGRAMMING\allAI-OS` y primer commit.
-- [ ] Crear estructura de carpetas:
+- [x] `git init` en `c:\JM\PROGRAMMING\allAI-OS` y primer commit (`36bd0f2`, branch `main`, DCO sign-off).
+- [x] Estructura de carpetas creada según el plan (con README en cada subcarpeta).
+- [ ] Push inicial a GitHub (bloqueado por host key SSH — ver `Notas de sesión`).
+- [ ] Configurar branch protection en `main` (tras primer push exitoso).
+- [ ] Configurar pre-commit con hooks (ruff, gitleaks, etc.) — pendiente cuando llegue código real.
+
+Plan de carpetas (referencia, ya materializada):
   ```
   allAI-OS/
   ├── README.md
