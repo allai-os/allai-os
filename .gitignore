@@ -1,0 +1,75 @@
+# --- OS / editores ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.iml
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+htmlcov/
+.coverage
+coverage.xml
+
+# --- Rust ---
+target/
+Cargo.lock.bak
+**/*.rs.bk
+
+# --- Node / web ---
+node_modules/
+dist/
+build/
+.next/
+.astro/
+*.log
+
+# --- Build artefacts de la distro ---
+distro/build/
+distro/iso/*.iso
+distro/iso/*.iso.sha256
+distro/ostree-repo/
+distro/rpms/build/
+distro/rpms/SRPMS/
+distro/rpms/RPMS/
+distro/cache/
+
+# --- Modelos y datos pesados ---
+*.gguf
+*.safetensors
+*.bin
+models/
+data/cache/
+
+# --- Secretos: jamás commitear ---
+*.key
+*.pem
+*.pfx
+*.p12
+secrets/
+credentials/
+*.kbx
+gpg-keys/
+
+# --- Generated docs ---
+docs/_build/
+site/
