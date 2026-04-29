@@ -179,7 +179,11 @@ def test_chat_with_computer_use_adds_beta() -> None:
     )
 
     kwargs = fake_client.messages.create.call_args.kwargs
-    assert COMPUTER_USE_BETA in kwargs["betas"]
+    # Beta como header HTTP, no como kwarg `betas=` (compatible con todas las
+    # versiones del SDK).
+    assert "betas" not in kwargs, "no debemos pasar betas como kwarg, rompe en SDKs viejos"
+    headers = kwargs.get("extra_headers") or {}
+    assert COMPUTER_USE_BETA in headers.get("anthropic-beta", "")
     tool = kwargs["tools"][0]
     assert tool["type"] == COMPUTER_USE_TOOL_TYPE
     assert tool["display_width_px"] == 1920

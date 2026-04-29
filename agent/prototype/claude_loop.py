@@ -205,13 +205,17 @@ def run(config: RunConfig) -> RunResult:
 
     try:
         for iteration in range(config.max_iterations):
+            # Pasamos el beta header como header HTTP — esto funciona en todas
+            # las versiones del SDK, mientras que `betas=[...]` como kwarg sólo
+            # existe en algunas. Algunas versiones también ofrecen
+            # `client.beta.messages.create(...)`. Optamos por el header crudo.
             response = client.messages.create(
                 model=config.model,
                 max_tokens=4096,
                 system=SYSTEM_PROMPT + ("\n\n" + config.extra_system if config.extra_system else ""),
                 tools=[computer_tool],
                 messages=messages,
-                betas=["computer-use-2025-01-24"],
+                extra_headers={"anthropic-beta": "computer-use-2025-01-24"},
             )
 
             transcript.append(

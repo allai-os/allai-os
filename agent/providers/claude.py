@@ -209,9 +209,16 @@ class ClaudeProvider(Provider):
         if request.temperature is not None:
             params["temperature"] = request.temperature
 
+        # Pasamos los betas como header HTTP directo en lugar del kwarg `betas=`,
+        # porque algunas versiones del SDK no aceptan ese kwarg en
+        # `messages.create()` (lanzan TypeError). Como header funciona siempre.
         betas = self._collect_betas(request)
         if betas:
-            params["betas"] = list(betas)
+            existing_headers = params.get("extra_headers") or {}
+            params["extra_headers"] = {
+                **existing_headers,
+                "anthropic-beta": ",".join(sorted(betas)),
+            }
 
         # extra wins over our defaults intentionally; allows escape hatch
         params.update(request.extra)
