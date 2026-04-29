@@ -44,3 +44,24 @@ ordenadas cronológicamente (más reciente arriba).
 ## Corridas
 
 > Pendiente: primera corrida de Juan Manuel.
+# Benchmark del prototipo — claude
+
+- Modelo: `claude-opus-4-7`
+- Fecha: 2026-04-29 08:05:17
+- Resultado: **0/10** tareas completadas
+- Duración total: 30.1s
+
+## Detalle
+
+| Tarea | Éxito | Iteraciones | Tool calls | Duración (s) | Error |
+|-------|-------|-------------|------------|--------------|-------|
+| open_firefox | ❌ | 1 | 0 | 0.01 | TypeError: Messages.create() got an unexpected keyword argument 'betas' |
+| navigate_url | ❌ | 1 | 0 | 0.01 | TypeError: Messages.create() got an unexpected keyword argument 'betas' |
+| search_term | ❌ | 1 | 0 | 0.01 | TypeError: Messages.create() got an unexpected keyword argument 'betas' |
+| terminal_uname | ❌ | 1 | 0 | 0.01 | TypeError: Messages.create() got an unexpected keyword argument 'betas' |
+| create_text_file | ❌ | 1 | 0 | 0.03 | TypeError: Messages.create() got an unexpected keyword argument 'betas' |
+| take_screenshot | ❌ | 1 | 0 | 0.01 | TypeError: Messages.create() got an unexpected keyword argument 'betas' |
+| change_wallpaper | ❌ | 1 | 0 | 0.01 | TypeError: Messages.create() got an unexpected keyword argument 'betas' |
+| read_resolution | ❌ | 1 | 0 | 0.01 | TypeError: Messages.create() got an unexpected keyword argument 'betas' |
+| count_conf | ❌ | 1 | 0 | 0.01 | TypeError: Messages.create() got an unexpected keyword argument 'betas' |
+| close_all | ❌ | 1 | 0 | 0.01 | TypeError: Messages.create() got an unexpected keyword argument 'betas' |
