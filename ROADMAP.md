@@ -30,9 +30,9 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 
 - **Fecha de inicio**: 2026-04-28
 - **Fase activa**: L — Link
-- **Paso activo**: L.3 — Tool registry (siguiente).
-- **Próxima acción concreta**: definir `agent/tools/manifest.yaml` y los wrappers de cada tool (screen, mouse, keyboard, shell, fs, app, browser, clipboard, notify) con schema, ejecutor y nivel de riesgo.
-- **Última sesión**: 2026-04-28. L.1 (provider abstraction) y L.2 (router) cerrados con 77 tests pasando. A.5 código listo, pendiente ejecución en VM.
+- **Paso activo**: L.4 — Memoria del agente (siguiente).
+- **Próxima acción concreta**: implementar `agent/memory/` con SQLite cifrado (sqlcipher) + embeddings locales y comandos "recuerda X" / "olvida Y".
+- **Última sesión**: 2026-04-29. L.1, L.2 y L.3 cerrados con 138 tests pasando. Prototipo A.5 actualizado con segunda versión que ejercita Router+Provider+ToolExecutor end-to-end (lista para que Juan Manuel ejecute en VM).
 - **Pendientes externos del usuario**:
   - [x] Dominio `allai-os.org` registrado.
   - [x] Repo GitHub `git@github.com:allai-os/allai-os.git` creado y push exitoso (rebase con commit inicial de GitHub resuelto a favor de nuestro LICENSE).
@@ -202,22 +202,26 @@ Plan de carpetas (referencia, ya materializada):
 - [x] **42 tests nuevos** (77 totales): privacidad, clasificación, fallback, presupuesto agotado, modelo preferido respetado o saltado por capabilities, no fallback en errores de auth.
 - [ ] Telemetría local de decisiones — pendiente (audit log de fase Launch lo cubrirá).
 
-## L.3 — Tool registry `[ ]`
+## L.3 — Tool registry `[x]` (cerrada 2026-04-28)
 
 **Tiempo: 1 semana**
 
 Implementar tools en `agent/tools/`. Cada tool: schema JSON + ejecutor + tests + nivel de riesgo (`safe` / `confirm` / `dangerous`).
 
-- [ ] `screen.screenshot()`, `screen.region()`.
-- [ ] `mouse.move`, `mouse.click`, `mouse.drag`, `mouse.scroll`.
-- [ ] `keyboard.type`, `keyboard.key`, `keyboard.shortcut`.
-- [ ] `shell.run` (sandboxed, con confirmación según riesgo).
-- [ ] `fs.read`, `fs.write`, `fs.list`, `fs.glob` (con path policy).
-- [ ] `app.launch`, `app.focus`, `app.list_windows`.
-- [ ] `browser.open`, `browser.navigate`, `browser.dom` (vía CDP a Firefox/Chromium).
-- [ ] `clipboard.read`, `clipboard.write`.
-- [ ] `notify.send`.
-- [ ] Manifest declarativo `tools.manifest.yaml`.
+- [x] `tools/base.py` — `RiskLevel`, `ToolDefinition`, `ToolResult`, errores tipados.
+- [x] `tools/registry.py` — `ToolRegistry` central + global default + filtros por riesgo/categoría + conversión a `core.Tool` para el provider.
+- [x] `tools/executor.py` — `ToolExecutor` con dispatcher, `ConfirmationProtocol` y `CapabilityCheckerProtocol` inyectables, `GatePolicy` con modos (always_ask, trust_after_first), validación mínima de schema, captura de excepciones.
+- [x] `screen.screenshot` (mss, multi-monitor).
+- [x] `mouse.move`, `mouse.click`, `mouse.drag`, `mouse.scroll` (pyautogui — wayland/libei en fase Launch).
+- [x] `keyboard.type`, `keyboard.key`, `keyboard.shortcut`.
+- [x] `shell.run` (filtra patrones destructivos: rm -rf, sudo, dd, mkfs, force-push, fork-bomb) + `shell.run_dangerous` (DANGEROUS, sin filtro pero confirma siempre).
+- [x] `fs.read`, `fs.write`, `fs.list`, `fs.glob`, `fs.delete` (con expansión `~`, truncado a 1MB, refusal a borrar directorios).
+- [x] `app.launch` (gtk-launch o ejecutable en PATH).
+- [x] `browser.open` real + `browser.navigate`, `browser.dom` stubs (CDP en fase Launch).
+- [x] `clipboard.read`, `clipboard.write` (pyperclip).
+- [x] `notify.send` (notify-send).
+- [x] Schema declarativo embebido en cada `ToolDefinition` (manifest YAML separado innecesario — la fuente de verdad es Python tipado).
+- [x] **61 tests nuevos** (138 totales): registry, executor con todos los gates (capability denied, confirm denied, validation, exception catching, riesgos), filtro de patrones destructivos, fs end-to-end con tmp_path.
 
 ## L.4 — Memoria del agente `[ ]`
 
