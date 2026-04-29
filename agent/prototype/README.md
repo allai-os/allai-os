@@ -2,9 +2,16 @@
 
 > "Computer Use Hello World" — el primer test técnico real de allAI OS.
 
-Este prototipo prueba que la idea funciona: pedirle a una IA que controle un escritorio Fedora y verificar que puede completar tareas simples por su cuenta.
+Hay **dos scripts** en esta carpeta:
 
-**Importante**: este es código de prototipo. **No es la arquitectura final**. No tiene sandbox real, ni capability system, ni audit log firmado, ni IPC D-Bus. Esas piezas vienen en la fase Link / Launch. El objetivo aquí es exclusivamente **validar viabilidad técnica**.
+| Script | Para qué sirve |
+|--------|----------------|
+| `run.py` | Benchmark simple: Claude Computer Use directo, sin nuestra arquitectura. Valida que Computer Use funciona en Fedora. |
+| `integration_demo.py` | Demo end-to-end de la arquitectura productiva: Router + Provider + ToolExecutor + tools registrados. Valida L.1+L.2+L.3 de un golpe. |
+
+Empieza por `run.py` (más simple). Cuando funcione, prueba `integration_demo.py` para validar el sistema completo.
+
+**Importante**: el código en `tools.py`, `claude_loop.py` y `ollama_loop.py` es de prototipo. **No es la arquitectura final** — esa está en `agent/core/` y `agent/tools/`. Aquí no hay sandbox real, capability system, ni IPC D-Bus. Esas piezas viven en la arquitectura productiva (`integration_demo.py` ya las usa) y se materializarán como sistema en la fase Launch.
 
 ## Qué prueba
 
@@ -139,6 +146,42 @@ Cuando termines una corrida del benchmark, compártelo en `docs/prototype-result
 - No hay confirmaciones de seguridad. La IA hará lo que decida hacer. **Dale tareas acotadas** y supervisa.
 - El parser de tool-use de Ollama es heurístico — Qwen2.5-VL no tiene un formato tan estandarizado como Claude. Esperar más fallos.
 
+## Probar la arquitectura productiva (integration_demo)
+
+Una vez que `run.py` funcione, `integration_demo.py` valida que toda la
+arquitectura nueva (L.1, L.2, L.3) funciona junta. Ejemplos:
+
+```bash
+cd agent/
+source .venv/bin/activate
+
+# instala el paquete real (no sólo las deps del prototipo)
+pip install -e ".[dev]"
+
+# con Claude
+export ANTHROPIC_API_KEY="sk-ant-..."
+python prototype/integration_demo.py "lista los archivos .py en agent/core"
+
+# fuerza local (Ollama corriendo + un modelo con tools)
+ollama pull qwen2.5:7b
+python prototype/integration_demo.py --policy local_only "qué hora es en el sistema"
+
+# detalle: --debug muestra logs del router
+python prototype/integration_demo.py --debug "lee README.md y resúmemelo"
+```
+
+Lo que valida:
+
+- El **Router** elige el provider correcto y reporta la razón.
+- El **Provider** (Claude u Ollama) traduce nuestros tipos a su API.
+- El **ToolExecutor** despacha cada `ToolUseBlock`, aplica gates, ejecuta
+  el tool real (fs, shell, etc.) y devuelve `ToolResultBlock`.
+- El loop completo de turnos hasta que el modelo dice "listo".
+
 ## Después del prototipo
 
-Cuando tengas resultados, actualiza el ROADMAP marcando A.5 como completado y avanza a Fase L — Link. Ahí construimos el provider abstraction y el tool registry de verdad, esta vez con la arquitectura de [ADR-001](../../docs/adr/0001-lenguaje-agente-core.md) y [ADR-006](../../docs/adr/0006-modelo-permisos.md).
+Cuando ambos scripts funcionen, marca A.5 como completado en `ROADMAP.md`.
+Anota observaciones en `docs/prototype-results.md` — sobre todo si algún tool
+falló, si el router se equivocó de política, o si Ollama no consiguió mantener
+el formato de tool calls. Ese feedback alimenta L.4 (memoria) y la fase
+Launch (sandbox real, gates con UI).
