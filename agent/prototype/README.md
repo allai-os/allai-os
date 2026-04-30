@@ -17,7 +17,8 @@ Empieza por `run.py` (más simple). Cuando funcione, prueba `integration_demo.py
 
 1. Que **Claude Computer Use** funciona en una VM Fedora moderna y puede completar tareas simples sin intervención humana.
 2. Que **Ollama + un modelo de visión** (Qwen2.5-VL) puede hacer lo mismo, aunque con menor precisión y con parser propio del JSON de respuesta.
-3. Que la latencia y el costo son aceptables para flujos típicos.
+3. Que **Gemini Computer Use (preview)** completa el mismo benchmark, dando un tercer proveedor cloud para comparar precisión, latencia y costo.
+4. Que la latencia y el costo son aceptables para flujos típicos.
 
 ## Tareas de evaluación
 
@@ -90,11 +91,24 @@ ollama serve  # en otra terminal si no está corriendo
 python run.py --provider ollama --model qwen2.5vl:7b --task "abre Firefox y busca allAI OS"
 ```
 
+### Con Gemini (Google)
+
+```bash
+export GOOGLE_API_KEY="..."   # también acepta GEMINI_API_KEY
+python run.py --provider gemini --task "abre Firefox y busca allAI OS"
+```
+
+Por defecto usa el modelo preview de Computer Use
+(`gemini-2.5-computer-use-preview-10-2025`). Con `--model gemini-2.5-pro` u
+otro ID forzas un modelo específico (los modelos no-preview no soportan
+Computer Use nativo, así que el loop fallará — útil sólo para depurar).
+
 ### Modo benchmark (las 10 tareas)
 
 ```bash
 python run.py --provider claude --benchmark
 python run.py --provider ollama --model qwen2.5vl:7b --benchmark
+python run.py --provider gemini --benchmark
 ```
 
 Genera reporte en `./prototype-runs/<timestamp>/report.md` con resultados por tarea.

@@ -32,7 +32,7 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 - **Fase activa**: L — Link
 - **Paso activo**: L.4 — Memoria del agente (siguiente).
 - **Próxima acción concreta**: implementar `agent/memory/` con SQLite cifrado (sqlcipher) + embeddings locales y comandos "recuerda X" / "olvida Y".
-- **Última sesión**: 2026-04-29. L.1, L.2 y L.3 cerrados con 138 tests pasando. Prototipo A.5 actualizado con segunda versión que ejercita Router+Provider+ToolExecutor end-to-end (lista para que Juan Manuel ejecute en VM).
+- **Última sesión**: 2026-04-30. Añadido **tercer provider: Gemini** (Google) — refactor del Router para soportar múltiples cloud/local providers, `GeminiProvider` (4 modelos: 2.5 Pro / Flash / Flash-Lite / Computer Use preview), `gemini_loop.py` para el prototipo y 16 tests nuevos de provider. **154 tests pasando** (138 anteriores + 16 Gemini). `pyproject.toml`, `requirements.txt`, `setup_vm.sh`, `README.md` del prototipo, e `integration_demo.py` actualizados para los 3 providers (Claude / Gemini / Ollama).
 - **Pendientes externos del usuario**:
   - [x] Dominio `allai-os.org` registrado.
   - [x] Repo GitHub `git@github.com:allai-os/allai-os.git` creado y push exitoso (rebase con commit inicial de GitHub resuelto a favor de nuestro LICENSE).
@@ -156,19 +156,21 @@ Plan de carpetas (referencia, ya materializada):
 - [x] 6 flujos paso a paso documentados: abrir Firefox + buscar, leer PDF, instalar paquete, enviar mensaje a tercero (caso sensible), conectar VPN (gate de credenciales), modo offline.
 - [x] Modos de operación enumerados (Trust / Always ask / Paranoid / Demo / Offline / Privacy).
 
-## A.5 — Prototipo de viabilidad ("Computer Use Hello World") `[~]` (código listo 2026-04-28, pendiente ejecución)
+## A.5 — Prototipo de viabilidad ("Computer Use Hello World") `[~]` (código listo 2026-04-30, pendiente ejecución)
 
 **Tiempo: 3-4 días**
 
 - [x] Script Python con loop de Computer Use vs Claude (`agent/prototype/claude_loop.py`): screenshot → tool `computer_20250124` → ejecutar acción → repetir.
 - [x] Loop equivalente con Ollama + modelo de visión (`agent/prototype/ollama_loop.py`): respuesta JSON estructurada con parser heurístico.
+- [x] Loop con **Gemini Computer Use preview** (`agent/prototype/gemini_loop.py`): tool `computer_use` nativo de Google con `environment=ENVIRONMENT_BROWSER`, mapeo de acciones (`click_at`, `type_text_at`, `key_combination`, `scroll_at`, `drag_and_drop`, etc.) a nuestros tools locales.
 - [x] Tools compartidos (`agent/prototype/tools.py`): mss para screenshot, pyautogui para input, subprocess para shell/launch.
-- [x] Entrypoint `agent/prototype/run.py` con CLI: `--provider claude|ollama`, `--task "..."`, `--benchmark`.
+- [x] Entrypoint `agent/prototype/run.py` con CLI: `--provider claude|ollama|gemini`, `--task "..."`, `--benchmark`.
 - [x] 10 tareas de evaluación definidas en `BENCHMARK_TASKS`.
-- [x] Script `setup_vm.sh` para instalar dependencias en Fedora.
+- [x] Script `setup_vm.sh` para instalar dependencias en Fedora (incluye instrucciones para `GOOGLE_API_KEY`).
 - [x] Plantilla `docs/prototype-results.md` para registrar corridas.
-- [ ] **Pendiente del usuario**: ejecutar en VM, completar `docs/prototype-results.md`.
-- **Criterio de éxito**: completar 7/10 tareas simples sin intervención. Si falla, replanificar (no es bloqueante para seguir, pero ajusta expectativas).
+- [x] `integration_demo.py` registra automáticamente Claude / Gemini / Ollama si las credenciales/servicios están disponibles.
+- [ ] **Pendiente del usuario**: ejecutar en VM con cada provider y completar `docs/prototype-results.md`.
+- **Criterio de éxito**: completar 7/10 tareas simples sin intervención por al menos un provider. Si falla, replanificar (no es bloqueante para seguir, pero ajusta expectativas).
 
 ---
 
@@ -178,7 +180,7 @@ Plan de carpetas (referencia, ya materializada):
 
 **Duración estimada: 3-4 semanas**
 
-## L.1 — Provider abstraction `[x]` (cerrada 2026-04-28)
+## L.1 — Provider abstraction `[x]` (cerrada 2026-04-28, ampliada 2026-04-30 con Gemini)
 
 **Tiempo: 4-5 días**
 
@@ -187,11 +189,12 @@ Plan de carpetas (referencia, ya materializada):
 - [x] `agent/core/errors.py` — `ProviderError`, `AuthenticationError`, `RateLimitError`, `InvalidRequestError`, `ProviderUnavailableError`.
 - [x] `agent/providers/claude.py` — los 3 modelos (Opus 4.7, Sonnet 4.6, Haiku 4.5), prompt caching automático en system+tools, Computer Use con beta header, streaming traducido a `StreamEvent`.
 - [x] `agent/providers/ollama.py` — detección de modelos via `ollama.list()`, vision por nombre, tool-use nativo (Qwen/Llama 3+) o emulado (parser JSON balanceado), Computer Use emulado.
-- [x] `agent/pyproject.toml` — ruff + mypy strict + pytest configurados (ADR-001).
-- [x] **35 tests unitarios pasando** con mocks (sin red): codificación de blocks, traducción de responses, prompt caching, beta de Computer Use, fallbacks, parser JSON anidado.
-- [ ] Tests de integración con red real — pendiente para cuando Juan Manuel ejecute en VM con `ANTHROPIC_API_KEY` y `ollama serve`.
+- [x] `agent/providers/gemini.py` (2026-04-30) — modelos Gemini 2.5 Pro / Flash / Flash-Lite + Computer Use preview, function calling nativo, vision en cualquier modelo 2.5, streaming traducido a `StreamEvent`, traducción de `ToolUseBlock` ↔ `function_call/function_response`.
+- [x] `agent/pyproject.toml` — ruff + mypy strict + pytest configurados (ADR-001), `google-genai` añadido como dependencia.
+- [x] **51 tests unitarios pasando** con mocks (sin red): codificación de blocks, traducción de responses, prompt caching, beta de Computer Use, fallbacks, parser JSON anidado, function_call de Gemini, ruteo automático al modelo Computer Use cuando hay `ComputerUseTool`.
+- [ ] Tests de integración con red real — pendiente para cuando Juan Manuel ejecute en VM con `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY` y `ollama serve`.
 
-## L.2 — Router inteligente `[x]` (cerrada 2026-04-28)
+## L.2 — Router inteligente `[x]` (cerrada 2026-04-28, refactor 2026-04-30 para multi-provider)
 
 **Tiempo: 3-4 días**
 
@@ -199,7 +202,8 @@ Plan de carpetas (referencia, ya materializada):
 - [x] `agent/core/privacy.py` — detector de PII (email, teléfono, tarjeta con Luhn, claves API conocidas, claves PEM, password fields, IDs nacionales). Snippets redactados.
 - [x] `agent/core/task_classifier.py` — `TaskKind` (computer_use, vision, tool_chain, plain_chat) inferido de la forma de la `ChatRequest`. `TaskHints` para overrides por mensaje.
 - [x] `agent/core/router.py` — `Router` con `route()` (decisión pura) y `chat()` / `chat_stream()` con fallback automático. PII y hints fuerzan local. Errores de auth/rate-limit propagan inmediatamente; sólo `ProviderUnavailableError` activa fallback. Selección de modelo por capabilities + costo (Haiku > Opus para tareas simples, Opus para Computer Use).
-- [x] **42 tests nuevos** (77 totales): privacidad, clasificación, fallback, presupuesto agotado, modelo preferido respetado o saltado por capabilities, no fallback en errores de auth.
+- [x] **Refactor 2026-04-30**: `_cloud_provider()` / `_local_provider()` → `_cloud_providers()` / `_local_providers()` (lista). Ahora la cadena de fallback puede tener varios cloud (Claude → Gemini) y varios local en orden, en lugar de un único provider por categoría.
+- [x] **42 tests** (77 totales tras L.2): privacidad, clasificación, fallback, presupuesto agotado, modelo preferido respetado o saltado por capabilities, no fallback en errores de auth.
 - [ ] Telemetría local de decisiones — pendiente (audit log de fase Launch lo cubrirá).
 
 ## L.3 — Tool registry `[x]` (cerrada 2026-04-28)
@@ -515,4 +519,4 @@ Yo (Claude) leeré este archivo, identificaré el paso `[~]` activo o el primer 
 
 ---
 
-**Última actualización**: 2026-04-28 — Roadmap inicial creado.
+**Última actualización**: 2026-04-30 — Tercer provider añadido (Gemini, Google). Router refactorizado a multi-provider. A.5 ahora cubre Claude + Gemini + Ollama. 154 tests pasando.

@@ -46,9 +46,14 @@ Para correr con Ollama:
     ollama serve &              # si no está corriendo
     python run.py --provider ollama --task "abre Firefox"
 
+Para correr con Gemini (Google):
+    export GOOGLE_API_KEY="..."   # o GEMINI_API_KEY
+    python run.py --provider gemini --task "abre Firefox"
+
 Para benchmark de las 10 tareas:
     python run.py --provider claude --benchmark
     python run.py --provider ollama --benchmark
+    python run.py --provider gemini --benchmark
 
 ⚠️  Recomendación: corre esto en una VM con sesión Xorg.
     En GDM elige "GNOME on Xorg" antes de hacer login.

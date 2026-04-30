@@ -52,7 +52,7 @@ from core import (  # noqa: E402
     ToolResultBlock,
     ToolUseBlock,
 )
-from providers import ClaudeProvider, OllamaProvider  # noqa: E402
+from providers import ClaudeProvider, GeminiProvider, OllamaProvider  # noqa: E402
 from tools import (  # noqa: E402
     AllCapabilitiesGranted,
     AlwaysConfirm,
@@ -88,6 +88,15 @@ def _build_router(policy_mode: str) -> Router:
         except Exception as exc:  # noqa: BLE001
             print(f"[providers] claude no disponible: {exc}")
 
+    if "GOOGLE_API_KEY" in os.environ or "GEMINI_API_KEY" in os.environ:
+        try:
+            gp = GeminiProvider()
+            if gp.is_available():
+                providers.append(gp)
+                print("[providers] gemini listo")
+        except Exception as exc:  # noqa: BLE001
+            print(f"[providers] gemini no disponible: {exc}")
+
     try:
         op = OllamaProvider()
         if op.is_available():
@@ -98,7 +107,8 @@ def _build_router(policy_mode: str) -> Router:
 
     if not providers:
         raise SystemExit(
-            "Ningún provider disponible. Define ANTHROPIC_API_KEY o corre `ollama serve`."
+            "Ningún provider disponible. Define ANTHROPIC_API_KEY, "
+            "GOOGLE_API_KEY o corre `ollama serve`."
         )
 
     mode = RoutingMode(policy_mode)

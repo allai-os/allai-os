@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from typing import Final
 
 from core.errors import ProviderError, ProviderUnavailableError
-from core.messages import ChatRequest, ChatResponse, MessageStop, StreamEvent
+from core.messages import ChatRequest, ChatResponse, StreamEvent
 from core.policy import RoutingMode, RoutingPolicy
 from core.privacy import PIIMatch, detect_pii_in_messages
 from core.provider import ModelInfo, Provider
@@ -118,7 +118,7 @@ class Router:
 
         force_local, reason_for_force = self._must_force_local(hints, pii)
         if force_local:
-            chain = self._build_local_chain(task, request)
+            chain = self._build_local_chain(task)
             if not chain:
                 raise NoProviderAvailableError(
                     f"{reason_for_force} pero ningún provider local cumple los requisitos"
@@ -129,7 +129,7 @@ class Router:
 
         force_cloud, reason_force_cloud = self._must_force_cloud()
         if force_cloud:
-            chain = self._build_cloud_chain(task, request)
+            chain = self._build_cloud_chain(task)
             if not chain:
                 raise NoProviderAvailableError(
                     f"{reason_force_cloud} pero ningún provider cloud cumple los requisitos"
@@ -138,7 +138,7 @@ class Router:
                 chain=chain, reason=reason_force_cloud, task=task, pii_detected=pii
             )
 
-        chain, reason = self._plan(task, request)
+        chain, reason = self._plan(task)
         if not chain:
             raise NoProviderAvailableError(
                 "Ningún provider disponible cumple los requisitos de la tarea"
@@ -224,96 +224,85 @@ class Router:
             return True, _REASON_CLOUD_ONLY
         return False, ""
 
-    def _plan(
-        self, task: TaskProfile, request: ChatRequest
-    ) -> tuple[list[RoutingCandidate], str]:
+    def _plan(self, task: TaskProfile) -> tuple[list[RoutingCandidate], str]:
         if self._policy.mode is RoutingMode.CLOUD_FIRST:
-            chain = self._build_cloud_chain(task, request)
-            chain.extend(self._build_local_chain(task, request))
+            chain = self._build_cloud_chain(task)
+            chain.extend(self._build_local_chain(task))
             return chain, _REASON_CLOUD_FIRST
 
         if self._policy.mode is RoutingMode.LOCAL_FIRST:
-            chain = self._build_local_chain(task, request)
-            chain.extend(self._build_cloud_chain(task, request))
+            chain = self._build_local_chain(task)
+            chain.extend(self._build_cloud_chain(task))
             return chain, _REASON_LOCAL_FIRST
 
         # AUTO
         if task.kind is TaskKind.COMPUTER_USE:
-            chain = self._build_cloud_chain(task, request)
+            chain = self._build_cloud_chain(task)
             if chain:
                 # local como fallback, aunque sea emulado
-                chain.extend(self._build_local_chain(task, request))
+                chain.extend(self._build_local_chain(task))
                 return chain, _REASON_COMPUTER_USE_NATIVE
-            return self._build_local_chain(task, request), _REASON_OFFLINE
+            return self._build_local_chain(task), _REASON_OFFLINE
 
         if task.kind is TaskKind.VISION:
-            chain = self._build_local_chain(task, request)
-            chain.extend(self._build_cloud_chain(task, request))
+            chain = self._build_local_chain(task)
+            chain.extend(self._build_cloud_chain(task))
             return chain, _REASON_AUTO_LOCAL + " (vision)"
 
         if task.kind is TaskKind.PLAIN_CHAT:
-            chain = self._build_local_chain(task, request)
+            chain = self._build_local_chain(task)
             if chain:
                 # Para texto plano, local primero. Cloud sólo si local muere.
-                chain.extend(self._build_cloud_chain(task, request))
+                chain.extend(self._build_cloud_chain(task))
                 return chain, _REASON_AUTO_LOCAL
-            return self._build_cloud_chain(task, request), _REASON_AUTO_CLOUD
+            return self._build_cloud_chain(task), _REASON_AUTO_CLOUD
 
         # TOOL_CHAIN: cloud por confiabilidad de tool-use, local como respaldo
-        chain = self._build_cloud_chain(task, request)
-        chain.extend(self._build_local_chain(task, request))
+        chain = self._build_cloud_chain(task)
+        chain.extend(self._build_local_chain(task))
         return chain, _REASON_AUTO_CLOUD + " (tools)"
 
-    def _build_cloud_chain(
-        self, task: TaskProfile, request: ChatRequest
-    ) -> list[RoutingCandidate]:
+    def _build_cloud_chain(self, task: TaskProfile) -> list[RoutingCandidate]:
         if self._policy.cost_budget.monthly_exhausted():
             return []
-        cloud = self._cloud_provider()
-        if cloud is None or not cloud.is_available():
-            return []
-        model = self._select_model(
-            cloud,
-            task=task,
-            request=request,
-            preferred=self._policy.preferred_cloud_model,
-        )
-        return [RoutingCandidate(provider=cloud, model=model)] if model else []
+        chain: list[RoutingCandidate] = []
+        for cloud in self._cloud_providers():
+            if not cloud.is_available():
+                continue
+            model = self._select_model(
+                cloud,
+                task=task,
+                preferred=self._policy.preferred_cloud_model,
+            )
+            if model:
+                chain.append(RoutingCandidate(provider=cloud, model=model))
+        return chain
 
-    def _build_local_chain(
-        self, task: TaskProfile, request: ChatRequest
-    ) -> list[RoutingCandidate]:
-        local = self._local_provider()
-        if local is None or not local.is_available():
-            return []
-        model = self._select_model(
-            local,
-            task=task,
-            request=request,
-            preferred=self._policy.preferred_local_model,
-        )
-        return [RoutingCandidate(provider=local, model=model)] if model else []
+    def _build_local_chain(self, task: TaskProfile) -> list[RoutingCandidate]:
+        chain: list[RoutingCandidate] = []
+        for local in self._local_providers():
+            if not local.is_available():
+                continue
+            model = self._select_model(
+                local,
+                task=task,
+                preferred=self._policy.preferred_local_model,
+            )
+            if model:
+                chain.append(RoutingCandidate(provider=local, model=model))
+        return chain
 
-    def _cloud_provider(self) -> Provider | None:
-        for prov in self._providers.values():
-            caps = prov.capabilities()
-            if not caps.is_local:
-                return prov
-        return None
+    def _cloud_providers(self) -> list[Provider]:
+        return [p for p in self._providers.values() if not p.capabilities().is_local]
 
-    def _local_provider(self) -> Provider | None:
-        for prov in self._providers.values():
-            caps = prov.capabilities()
-            if caps.is_local:
-                return prov
-        return None
+    def _local_providers(self) -> list[Provider]:
+        return [p for p in self._providers.values() if p.capabilities().is_local]
 
     def _select_model(
         self,
         provider: Provider,
         *,
         task: TaskProfile,
-        request: ChatRequest,
         preferred: str | None,
     ) -> str | None:
         caps = provider.capabilities()

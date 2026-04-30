@@ -5,6 +5,7 @@ Ejemplos:
 
     python run.py --provider claude --task "abre Firefox y busca allAI OS"
     python run.py --provider ollama --model qwen2.5vl:7b --task "..."
+    python run.py --provider gemini --task "..."
     python run.py --provider claude --benchmark
 """
 
@@ -17,6 +18,7 @@ import time
 from pathlib import Path
 
 import claude_loop
+import gemini_loop
 import ollama_loop
 
 
@@ -56,6 +58,17 @@ def _run_ollama(task: str, model: str, log_dir: Path, host: str | None) -> dict:
     return _result_to_dict(result)
 
 
+def _run_gemini(task: str, model: str, log_dir: Path) -> dict:
+    if "GOOGLE_API_KEY" not in os.environ and "GEMINI_API_KEY" not in os.environ:
+        print(
+            "ERROR: GOOGLE_API_KEY ni GEMINI_API_KEY definidos.", file=sys.stderr
+        )
+        sys.exit(2)
+    cfg = gemini_loop.RunConfig(task=task, model=model, log_dir=log_dir)
+    result = gemini_loop.run(cfg)
+    return _result_to_dict(result)
+
+
 def _result_to_dict(result) -> dict:
     return {
         "success": result.success,
@@ -80,6 +93,8 @@ def _benchmark(provider: str, model: str, host: str | None, root: Path) -> None:
         log_dir = overall_dir / label
         if provider == "claude":
             r = _run_claude(task, model, log_dir)
+        elif provider == "gemini":
+            r = _run_gemini(task, model, log_dir)
         else:
             r = _run_ollama(task, model, log_dir, host)
         print(f"   -> success={r['success']} iters={r['iterations']} t={r['duration_s']}s")
@@ -105,7 +120,7 @@ def _benchmark(provider: str, model: str, host: str | None, root: Path) -> None:
     ]
     for label, task, r in results:
         lines.append(
-            f"| {label} | {'✅' if r['success'] else '❌'} | {r['iterations']} | "
+            f"| {label} | {'OK' if r['success'] else 'X'} | {r['iterations']} | "
             f"{r['tool_calls']} | {r['duration_s']} | {r['error'] or ''} |"
         )
     summary_path.write_text("\n".join(lines), encoding="utf-8")
@@ -114,11 +129,15 @@ def _benchmark(provider: str, model: str, host: str | None, root: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Prototipo Computer Use de allAI OS")
-    parser.add_argument("--provider", choices=["claude", "ollama"], required=True)
+    parser.add_argument(
+        "--provider", choices=["claude", "ollama", "gemini"], required=True
+    )
     parser.add_argument("--model", default=None, help="Modelo a usar")
     parser.add_argument("--task", help="Tarea en lenguaje natural (omitir si --benchmark)")
     parser.add_argument("--benchmark", action="store_true", help="Ejecuta las 10 tareas estándar")
-    parser.add_argument("--ollama-host", default=None, help="URL de Ollama (default: http://localhost:11434)")
+    parser.add_argument(
+        "--ollama-host", default=None, help="URL de Ollama (default: http://localhost:11434)"
+    )
     parser.add_argument("--logs", default="prototype-runs", help="Carpeta de logs")
     args = parser.parse_args()
 
@@ -134,6 +153,14 @@ def main() -> None:
         else:
             log_dir = _make_log_dir(root, "claude")
             r = _run_claude(args.task, model, log_dir)
+            print(r)
+    elif args.provider == "gemini":
+        model = args.model or gemini_loop.DEFAULT_MODEL
+        if args.benchmark:
+            _benchmark("gemini", model, None, root)
+        else:
+            log_dir = _make_log_dir(root, "gemini")
+            r = _run_gemini(args.task, model, log_dir)
             print(r)
     else:
         model = args.model or ollama_loop.DEFAULT_MODEL
