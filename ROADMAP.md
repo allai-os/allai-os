@@ -30,8 +30,8 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 
 - **Fecha de inicio**: 2026-04-28
 - **Fase activa**: L — Link
-- **Paso activo**: L.4 — Memoria del agente (siguiente).
-- **Próxima acción concreta**: implementar `agent/memory/` con SQLite cifrado (sqlcipher) + embeddings locales y comandos "recuerda X" / "olvida Y".
+- **Paso activo**: L.4 — Memoria del agente `[~]` (en curso 2026-04-30).
+- **Próxima acción concreta**: implementar `agent/memory/` con enfoque security-first — SQLCipher (AES-256/HMAC-SHA512), Argon2id KDF, AEAD sealed exports, audit log con hash-chain, filtro PII obligatorio, detección de prompt injection, embeddings 100% locales (`bge-m3`).
 - **Última sesión**: 2026-04-30. Añadido **tercer provider: Gemini** (Google) — refactor del Router para soportar múltiples cloud/local providers, `GeminiProvider` (4 modelos: 2.5 Pro / Flash / Flash-Lite / Computer Use preview), `gemini_loop.py` para el prototipo y 16 tests nuevos de provider. **154 tests pasando** (138 anteriores + 16 Gemini). `pyproject.toml`, `requirements.txt`, `setup_vm.sh`, `README.md` del prototipo, e `integration_demo.py` actualizados para los 3 providers (Claude / Gemini / Ollama).
 - **Pendientes externos del usuario**:
   - [x] Dominio `allai-os.org` registrado.
@@ -227,14 +227,25 @@ Implementar tools en `agent/tools/`. Cada tool: schema JSON + ejecutor + tests +
 - [x] Schema declarativo embebido en cada `ToolDefinition` (manifest YAML separado innecesario — la fuente de verdad es Python tipado).
 - [x] **61 tests nuevos** (138 totales): registry, executor con todos los gates (capability denied, confirm denied, validation, exception catching, riesgos), filtro de patrones destructivos, fs end-to-end con tmp_path.
 
-## L.4 — Memoria del agente `[ ]`
+## L.4 — Memoria del agente `[~]` (en curso 2026-04-30, enfoque security-first)
 
-**Tiempo: 3-4 días**
+**Tiempo: 6-9 días** (ampliado por defensa en profundidad — ver decisión del usuario "todos los pasos lo más seguros posibles aunque tomen más tiempo").
 
-- [ ] Memoria de corto plazo: contexto de sesión.
-- [ ] Memoria de largo plazo: SQLite local cifrado (sqlcipher) con embeddings.
-- [ ] Comandos: "olvida X", "recuerda Y", "qué sabes de mí".
-- [ ] **Privacy by default**: la memoria nunca sale del equipo, ni siquiera con Claude (se inyecta en contexto sólo lo relevante a la query).
+### Sub-pasos
+- [~] `agent/memory/crypto.py` — Argon2id KDF, salt 32B random, ChaCha20Poly1305 AEAD para sealed exports. Hex export para SQLCipher.
+- [ ] `agent/memory/permissions.py` — chmod 0700/0600 enforced; refuse-to-open si están mal en POSIX (skip xfail en Windows).
+- [ ] `agent/memory/store.py` — pysqlcipher3 con AES-256 + HMAC-SHA512; refuse-open sin passphrase / mala / sin salt.
+- [ ] `agent/memory/audit.py` — append-only JSONL con hash-chain (cada línea referencia hmac de la anterior); `verify` detecta tampering.
+- [ ] `agent/memory/pii.py` — wrapper de `core/privacy.py`; flag `sensitive=True` bloquea inyección a cloud.
+- [ ] `agent/memory/injection_guard.py` — heurísticas de prompt injection (`ignore previous`, `you are now`, tags conocidos); flag `untrusted=True` cambia ruta de inyección.
+- [ ] `agent/memory/embeddings.py` — `sentence-transformers` 100% local (`BAAI/bge-m3` default, `paraphrase-multilingual-MiniLM-L12-v2` fallback). NUNCA APIs remotas.
+- [ ] `agent/memory/retrieval.py` — vector + BM25 vía sqlite-fts5; sanitización antes de devolver.
+- [ ] `agent/memory/session.py` — short-term in-memory; persistir requiere opt-in.
+- [ ] `agent/memory/commands.py` — parser "recuerda X / olvida Y / qué sabes de mí".
+- [ ] Tools nuevos en `agent/tools/memory.py`: `recall` (safe), `list` (safe), `remember` (confirm), `forget` (dangerous), `export` (dangerous), `import` (dangerous), `rotate_key` (dangerous).
+- [ ] Integración en `core/router.py` — inyección opcional con delimitadores fuertes; opt-in para cloud cuando hay `sensitive`/`untrusted`.
+- [ ] ADR-009 — política de memoria local cifrada.
+- [ ] **Tests de seguridad explícitos**: no abre sin passphrase, mala passphrase rechazada, permisos malos rechazados, audit-log tampering detectado, PII bloquea export sin opt-in, injection patterns detectados.
 
 ## L.5 — Voz (entrada y salida) `[ ]`
 

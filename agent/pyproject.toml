@@ -29,6 +29,8 @@ dependencies = [
     "google-genai>=0.3.0",
     "httpx>=0.27.0",
     "pydantic>=2.9.0",
+    "argon2-cffi>=23.1.0",
+    "cryptography>=43.0.0",
 ]
 
 [project.optional-dependencies]
@@ -41,9 +43,16 @@ dev = [
     "mypy>=1.13.0",
     "types-requests",
 ]
+encrypted-store = [
+    # SQLCipher binding. En Linux/macOS instala con `pip install
+    # sqlcipher3-binary` (trae libsqlcipher embebido). En Windows
+    # actualmente no hay wheel disponible — el desarrollo del módulo
+    # de memoria se valida en VM Fedora.
+    "sqlcipher3-binary>=0.5.0; platform_system != 'Windows'",
+]
 
 [tool.hatch.build.targets.wheel]
-packages = ["core", "providers", "tools"]
+packages = ["core", "memory", "providers", "tools"]
 
 [tool.ruff]
 line-length = 100
