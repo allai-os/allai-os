@@ -9,8 +9,8 @@ Submódulos:
   - permissions: chmod 0700/0600 + validación.
   - store: SQLCipher (AES-256/HMAC-SHA512) — TODO.
   - audit: log append-only con hash-chain — TODO.
-  - pii: filtro de información sensible — TODO.
-  - injection_guard: detección de prompt injection — TODO.
+  - pii: filtro de información sensible.
+  - injection_guard: detección de prompt injection.
   - embeddings: 100% local, nunca remoto — TODO.
   - retrieval: vector + BM25 sobre sqlite-fts5 — TODO.
   - session: short-term in-memory — TODO.
@@ -52,6 +52,21 @@ from memory.permissions import (
     is_world_or_group_accessible,
     validate_dir_perms,
     validate_file_perms,
+)
+from memory.injection_guard import (
+    InjectionBlockedError,
+    InjectionPolicy,
+    InjectionResult,
+    assert_safe_for_injection,
+    scan as injection_scan,
+    wrap_for_injection,
+)
+from memory.pii import (
+    CloudBlockedError,
+    PIIFilterResult,
+    assert_safe_for_cloud,
+    is_sensitive,
+    scan as pii_scan,
 )
 from memory.store import (
     SQLCipherUnavailableError,
@@ -109,4 +124,17 @@ __all__ = [
     "unseal",
     "validate_dir_perms",
     "validate_file_perms",
+    # pii
+    "CloudBlockedError",
+    "PIIFilterResult",
+    "assert_safe_for_cloud",
+    "is_sensitive",
+    "pii_scan",
+    # injection_guard
+    "InjectionBlockedError",
+    "InjectionPolicy",
+    "InjectionResult",
+    "assert_safe_for_injection",
+    "injection_scan",
+    "wrap_for_injection",
 ]
