@@ -13,8 +13,8 @@ Submódulos:
   - injection_guard: detección de prompt injection.
   - embeddings: 100% local, nunca remoto — TODO.
   - retrieval: vector + BM25 sobre sqlite-fts5 — TODO.
-  - session: short-term in-memory — TODO.
-  - commands: parser de "recuerda/olvida/qué sabes" — TODO.
+  - session: short-term in-memory.
+  - commands: parser de "recuerda/olvida/qué sabes".
 """
 
 from memory.audit import (
@@ -68,6 +68,18 @@ from memory.pii import (
     is_sensitive,
     scan as pii_scan,
 )
+from memory.commands import (
+    ClearCommand,
+    CommandKind,
+    ExportCommand,
+    ForgetCommand,
+    MemoryCommand,
+    QueryCommand,
+    RememberCommand,
+    is_memory_command,
+    parse,
+)
+from memory.session import SessionEntry, SessionMemory
 from memory.store import (
     SQLCipherUnavailableError,
     StoreError,
@@ -137,4 +149,17 @@ __all__ = [
     "assert_safe_for_injection",
     "injection_scan",
     "wrap_for_injection",
+    # session
+    "SessionEntry",
+    "SessionMemory",
+    # commands
+    "ClearCommand",
+    "CommandKind",
+    "ExportCommand",
+    "ForgetCommand",
+    "MemoryCommand",
+    "QueryCommand",
+    "RememberCommand",
+    "is_memory_command",
+    "parse",
 ]
