@@ -45,6 +45,41 @@ ordenadas cronológicamente (más reciente arriba).
 
 ---
 
+## 2026-05-01 — claude (claude-opus-4-7) ✅
+
+- **Provider**: claude
+- **Modelo**: claude-opus-4-7
+- **Beta header**: `computer-use-2025-11-24` / Tool type: `computer_20251124`
+- **Hardware**: Fedora 43, kernel 6.19.14-200.fc43.x86_64, x86_64
+- **Sesión gráfica**: Xorg (DISPLAY=:0)
+- **Resolución**: 1366×768
+- **Resultado**: **8/9 tareas completadas** (1 interrumpida al final de sesión)
+- **Duración total**: ~60 min
+
+### Tareas
+
+| Tarea | Éxito | Iter | Duración | Notas |
+|-------|-------|------|----------|-------|
+| open_firefox | ✅ | 10 | 65s | Abrió Firefox desde terminal |
+| navigate_url | ✅ | 12 | 156s | DuckDuckGo cargado correctamente |
+| search_term | ✅ | 5 | 35s | Buscó "allAI OS", resultados mostrados |
+| terminal_uname | ✅ | 29 | 731s | Ejecutó `uname -a`, leyó output completo |
+| create_text_file | ✅ | 25 | 497s | Creó `/tmp/hello.txt` con "hola allAI" |
+| take_screenshot | ✅ | 12 | 174s | Screenshot guardado vía gnome-screenshot |
+| change_wallpaper | ✅ | 10 | 114s | Cambió wallpaper a azul geométrico |
+| read_resolution | ✅ | 4 | 36s | Reportó 1366×768 correctamente |
+| count_conf | ❌ | 30 | 757s | Agotó max_iterations sin completar |
+| close_all | ⚠️ | 7+ | — | Interrumpida: proceso killed al cerrar sesión |
+
+### Observaciones cualitativas
+
+- **Lo que funcionó bien**: tareas de UI directa (open, navigate, search, wallpaper, resolution) — el modelo navega menús con eficacia.
+- **Lo que falló**: `count_conf` (contar archivos .conf en /etc vía Nautilus) — tarea ambigua para navegación GUI; se habría resuelto mejor con shell.
+- **`terminal_uname`**: tardó 731s/29 iters — el modelo exploró varios terminales hasta dar con uno funcional, señal de que necesita contexto del entorno.
+- **Sugerencias para fase Link**: exponer un tool de shell directo (`bash`) para tareas de conteo/lectura de archivos; reducir dependencia de GUI pura para operaciones que shell resuelve en 1 iter.
+
+---
+
 ## 2026-05-01 — claude (bloqueado: sin créditos)
 
 - **Provider**: claude

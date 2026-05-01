@@ -52,8 +52,8 @@ from core.messages import (
 from core.provider import ModelInfo, Provider, ProviderCapabilities
 
 
-COMPUTER_USE_TOOL_TYPE = "computer_20250124"
-COMPUTER_USE_BETA = "computer-use-2025-01-24"
+COMPUTER_USE_TOOL_TYPE = "computer_20251124"
+COMPUTER_USE_BETA = "computer-use-2025-11-24"
 PROMPT_CACHING_BETA = "prompt-caching-2024-07-31"
 
 

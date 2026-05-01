@@ -22,7 +22,7 @@ import anthropic
 import tools
 
 
-COMPUTER_TOOL_VERSION = "computer_20250124"
+COMPUTER_TOOL_VERSION = "computer_20251124"
 DEFAULT_MODEL = "claude-opus-4-7"
 
 
@@ -215,7 +215,7 @@ def run(config: RunConfig) -> RunResult:
                 system=SYSTEM_PROMPT + ("\n\n" + config.extra_system if config.extra_system else ""),
                 tools=[computer_tool],
                 messages=messages,
-                extra_headers={"anthropic-beta": "computer-use-2025-01-24"},
+                extra_headers={"anthropic-beta": "computer-use-2025-11-24"},
             )
 
             transcript.append(
