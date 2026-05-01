@@ -69,7 +69,13 @@ def mouse_scroll(amount: int) -> None:
 
 
 def keyboard_type(text: str, interval: float = 0.02) -> None:
-    pyautogui.write(text, interval=interval)
+    # xdotool type envía Unicode directo a X11 sin depender del layout activo.
+    # pyautogui.write() asume layout US-English y falla con teclados en español.
+    delay_ms = max(1, int(interval * 1000))
+    subprocess.run(
+        ["xdotool", "type", "--clearmodifiers", "--delay", str(delay_ms), "--", text],
+        check=True,
+    )
 
 
 def keyboard_key(key: str) -> None:
