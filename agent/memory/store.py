@@ -236,7 +236,7 @@ def _apply_key(conn: Any, key: bytes) -> None:
     del closure y borramos la variable local apenas terminamos.
     """
     pragma = key_to_sqlcipher_pragma(key)
-    statement = f"PRAGMA key = {pragma};"
+    statement = f'PRAGMA key = "{pragma}";'
     conn.execute(statement)
     # Limpia el statement que contiene la key.
     statement = ""  # noqa: F841

@@ -43,7 +43,39 @@ ordenadas cronológicamente (más reciente arriba).
 
 ## Corridas
 
-> Pendiente: primera corrida de Juan Manuel.
+---
+
+## 2026-05-01 — claude (bloqueado: sin créditos)
+
+- **Provider**: claude
+- **Modelo**: claude-opus-4-7
+- **Hardware**: Fedora, sesión X11, pantalla 1366×768
+- **Resultado**: 0/10 tareas — bloqueadas por API (no ejecutadas)
+- **Error**: `BadRequestError 400 — credit balance too low`
+- **Acción**: recargar créditos en console.anthropic.com y re-correr.
+
+---
+
+## 2026-05-01 — gemini (bloqueado: free tier agotado)
+
+- **Provider**: gemini
+- **Modelo**: gemini-2.5-computer-use-preview-10-2025
+- **Hardware**: Fedora, sesión X11, pantalla 1366×768
+- **Resultado**: 0/10 tareas — bloqueadas por API (no ejecutadas)
+- **Error**: `429 RESOURCE_EXHAUSTED — free tier quota 0 para computer-use-preview`
+- **Acción**: activar billing en Google AI Studio y re-correr.
+
+---
+
+> **Nota técnica (2026-05-01):** Se descubrió y corrigió un bug en `memory/store.py`:
+> `PRAGMA key = x'<hex>'` → `PRAGMA key = "x'<hex>'"` (comillas dobles requeridas
+> por SQLCipher para el formato blob hex). Los 248 unit tests del agente pasan ahora
+> en su totalidad (excl. Ollama).
+
+---
+
+## Corrida anterior — claude (error de SDK)
+
 # Benchmark del prototipo — claude
 
 - Modelo: `claude-opus-4-7`
