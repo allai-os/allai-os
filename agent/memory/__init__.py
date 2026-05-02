@@ -11,8 +11,8 @@ Submódulos:
   - audit: log append-only con hash-chain — TODO.
   - pii: filtro de información sensible.
   - injection_guard: detección de prompt injection.
-  - embeddings: 100% local, nunca remoto — TODO.
-  - retrieval: vector + BM25 sobre sqlite-fts5 — TODO.
+  - embeddings: 100% local, nunca remoto.
+  - retrieval: vector + BM25 sobre sqlite-fts5.
   - session: short-term in-memory.
   - commands: parser de "recuerda/olvida/qué sabes".
 """
@@ -68,6 +68,15 @@ from memory.pii import (
     is_sensitive,
     scan as pii_scan,
 )
+from memory.embeddings import (
+    EmbeddingsConfig,
+    EmbeddingsError,
+    EmbeddingsModel,
+    EmbeddingsUnavailableError,
+    MODEL_BGE_M3,
+    MODEL_MULTILINGUAL_MINI,
+)
+from memory.retrieval import RetrievalResult, retrieve
 from memory.commands import (
     ClearCommand,
     CommandKind,
@@ -136,6 +145,16 @@ __all__ = [
     "unseal",
     "validate_dir_perms",
     "validate_file_perms",
+    # embeddings
+    "EmbeddingsConfig",
+    "EmbeddingsError",
+    "EmbeddingsModel",
+    "EmbeddingsUnavailableError",
+    "MODEL_BGE_M3",
+    "MODEL_MULTILINGUAL_MINI",
+    # retrieval
+    "RetrievalResult",
+    "retrieve",
     # pii
     "CloudBlockedError",
     "PIIFilterResult",

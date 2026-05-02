@@ -50,6 +50,12 @@ encrypted-store = [
     # de memoria se valida en VM Fedora.
     "sqlcipher3-binary>=0.5.0; platform_system != 'Windows'",
 ]
+local-embeddings = [
+    # Embeddings 100% locales para memoria semántica. Nunca APIs remotas.
+    # Modelo por defecto en CPU: paraphrase-multilingual-MiniLM-L12-v2 (~500MB).
+    # Modelo preferido con GPU compatible (sm_75+): BAAI/bge-m3 (~570MB).
+    "sentence-transformers>=3.0.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["core", "memory", "providers", "tools"]
