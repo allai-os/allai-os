@@ -76,6 +76,8 @@ from memory.embeddings import (
     MODEL_BGE_M3,
     MODEL_MULTILINGUAL_MINI,
 )
+from memory.injector import InjectionResult as MemoryInjectionResult
+from memory.injector import inject_memory_context
 from memory.retrieval import RetrievalResult, retrieve
 from memory.commands import (
     ClearCommand,
@@ -155,6 +157,9 @@ __all__ = [
     # retrieval
     "RetrievalResult",
     "retrieve",
+    # injector
+    "MemoryInjectionResult",
+    "inject_memory_context",
     # pii
     "CloudBlockedError",
     "PIIFilterResult",

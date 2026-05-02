@@ -243,7 +243,7 @@ Implementar tools en `agent/tools/`. Cada tool: schema JSON + ejecutor + tests +
 - [x] `agent/memory/session.py` — short-term in-memory; `context_snippet()` para inyectar en prompt.
 - [x] `agent/memory/commands.py` — parser "recuerda X / olvida Y / qué sabes de mí / exporta / borra todo".
 - [x] `agent/tools/memory.py` — `recall` (SAFE), `memory.list` (SAFE), `remember` (CONFIRM), `forget` (DANGEROUS), `export` (DANGEROUS), `rotate_key` (DANGEROUS).
-- [ ] Integración en `core/router.py` — inyección opcional con delimitadores fuertes; opt-in para cloud cuando hay `sensitive`/`untrusted`.
+- [x] Integración via `memory/injector.py` — inyección opcional con delimitadores fuertes (`<allai-memory-context>`); opt-in `allow_sensitive_in_cloud` para entradas sensibles. Capa pura sobre `Router`, no lo modifica.
 - [x] ADR-009 — política de memoria local cifrada (`docs/adr/0009-memoria-local-cifrada.md`).
 - [x] **Tests de seguridad explícitos**: no abre sin passphrase, mala passphrase rechazada, permisos malos rechazados, audit-log tampering detectado, PII bloquea export sin opt-in, injection patterns detectados, 32 tests de `tools.memory`.
 

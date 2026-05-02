@@ -16,11 +16,27 @@ Diseño de privacidad:
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
 from memory.embeddings import EmbeddingsModel
 from memory.store import get_entry, list_entries, search_fts
+
+
+_WORD_RE = re.compile(r"\w+", re.UNICODE)
+
+
+def _to_fts_query(query: str) -> str:
+    """Convierte una query de lenguaje natural en una query FTS5 segura.
+
+    FTS5 trata caracteres como `?`, `!`, `:`, `*`, `"`, `(`, `)`, `+`, `-` como
+    operadores. Una query del usuario con esos signos rompe la sintaxis. Aquí
+    extraemos sólo tokens alfanuméricos Unicode y los unimos con espacios
+    (FTS5 los une con AND implícito, lo que da recall razonable).
+    """
+    tokens = _WORD_RE.findall(query)
+    return " ".join(tokens)
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,12 +82,17 @@ def retrieve(
         return []
 
     # ── Paso 1: candidatos léxicos ──────────────────────────────────────────
-    fts_rows = search_fts(
-        conn,
-        query,
-        limit=fts_candidates,
-        include_sensitive=include_sensitive,
-    )
+    # Sanitiza la query para FTS5 (sólo tokens \w+). Si tras sanear no queda
+    # nada (p.ej. query era pura puntuación), saltamos directamente al fallback.
+    fts_query = _to_fts_query(query)
+    fts_rows: list[dict[str, Any]] = []
+    if fts_query:
+        fts_rows = search_fts(
+            conn,
+            fts_query,
+            limit=fts_candidates,
+            include_sensitive=include_sensitive,
+        )
 
     if not fts_rows:
         # Si FTS no encontró nada, intentamos búsqueda semántica pura
