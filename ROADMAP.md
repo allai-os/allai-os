@@ -30,9 +30,9 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 
 - **Fecha de inicio**: 2026-04-28
 - **Fase activa**: L — Link
-- **Paso activo**: L.5 — Voz (entrada y salida) `[ ]`.
-- **Próxima acción concreta**: implementar `agent/voice/` — STT local (Whisper.cpp), TTS local (Piper/Coqui), integración con el loop del agente.
-- **Última sesión**: 2026-05-01. Completado **L.4 — Memoria del agente** — `memory.crypto`, `memory.permissions`, `memory.store` (SQLCipher AES-256 + Argon2id), `memory.audit` (hash-chain), `memory.pii`, `memory.injection_guard` (9 patrones), `memory.embeddings` (sentence-transformers local, auto-CPU/GPU), `memory.retrieval` (FTS5 + semántica híbrida), `memory.session`, `memory.commands`, `tools.memory` (recall/list/remember/forget/export/rotate_key), ADR-009. **32 tests nuevos** para `tools.memory`. Total tests en el proyecto: ~186+.
+- **Paso activo**: L.5 — Voz (entrada y salida) `[~]` (en curso).
+- **Próxima acción concreta**: implementar `agent/voice/stt_whisper.py` con faster-whisper (modelo `base` por defecto, `small`/`medium` opcionales) sobre la abstracción ya definida en `voice/provider.py`.
+- **Última sesión**: 2026-05-02. **L.4 100% cerrado** con `memory/injector.py` (inyección de contexto en `ChatRequest` con delimitadores fuertes `<allai-memory-context>` y opt-in cloud para sensibles, 16 tests) + bug fix en `retrieval.py` (sanitización FTS5 vía `_to_fts_query` para queries con `?`/`:`/`*`). **L.5 arrancado**: `voice/` con interfaces abstractas `STTProvider`/`TTSProvider` + tipos provider-agnostic + 29 tests. **459 tests pasando**.
 - **Pendientes externos del usuario**:
   - [x] Dominio `allai-os.org` registrado.
   - [x] Repo GitHub `git@github.com:allai-os/allai-os.git` creado y push exitoso (rebase con commit inicial de GitHub resuelto a favor de nuestro LICENSE).
@@ -247,10 +247,11 @@ Implementar tools en `agent/tools/`. Cada tool: schema JSON + ejecutor + tests +
 - [x] ADR-009 — política de memoria local cifrada (`docs/adr/0009-memoria-local-cifrada.md`).
 - [x] **Tests de seguridad explícitos**: no abre sin passphrase, mala passphrase rechazada, permisos malos rechazados, audit-log tampering detectado, PII bloquea export sin opt-in, injection patterns detectados, 32 tests de `tools.memory`.
 
-## L.5 — Voz (entrada y salida) `[ ]`
+## L.5 — Voz (entrada y salida) `[~]` (en curso 2026-05-02)
 
 **Tiempo: 4-5 días**
 
+- [x] Capa de abstracción `agent/voice/` — `STTProvider`/`TTSProvider`, tipos `AudioBuffer`/`Transcript`/`SynthesizeRequest`/`VoiceInfo` provider-agnostic, jerarquía de errores. 29 tests.
 - [ ] STT local: **Whisper** (faster-whisper) con modelos small/medium.
 - [ ] TTS local: **Piper** (alta calidad, voces multi-idioma incluido español).
 - [ ] Wake word opcional: "Hey allAI" con `openWakeWord`.

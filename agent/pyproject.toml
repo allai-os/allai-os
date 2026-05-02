@@ -58,7 +58,7 @@ local-embeddings = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["core", "memory", "providers", "tools"]
+packages = ["core", "memory", "providers", "tools", "voice"]
 
 [tool.ruff]
 line-length = 100
