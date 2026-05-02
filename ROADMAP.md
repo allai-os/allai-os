@@ -31,7 +31,7 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 - **Fecha de inicio**: 2026-04-28
 - **Fase activa**: L — Link
 - **Paso activo**: L.5 — Voz (entrada y salida) `[~]` (en curso).
-- **Próxima acción concreta**: implementar `agent/voice/stt_whisper.py` con faster-whisper (modelo `base` por defecto, `small`/`medium` opcionales) sobre la abstracción ya definida en `voice/provider.py`.
+- **Próxima acción concreta**: implementar `agent/voice/tts_piper.py` con Piper TTS (voces multi-idioma, español incluido) sobre la abstracción `TTSProvider`.
 - **Última sesión**: 2026-05-02. **L.4 100% cerrado** con `memory/injector.py` (inyección de contexto en `ChatRequest` con delimitadores fuertes `<allai-memory-context>` y opt-in cloud para sensibles, 16 tests) + bug fix en `retrieval.py` (sanitización FTS5 vía `_to_fts_query` para queries con `?`/`:`/`*`). **L.5 arrancado**: `voice/` con interfaces abstractas `STTProvider`/`TTSProvider` + tipos provider-agnostic + 29 tests. **459 tests pasando**.
 - **Pendientes externos del usuario**:
   - [x] Dominio `allai-os.org` registrado.
@@ -252,7 +252,7 @@ Implementar tools en `agent/tools/`. Cada tool: schema JSON + ejecutor + tests +
 **Tiempo: 4-5 días**
 
 - [x] Capa de abstracción `agent/voice/` — `STTProvider`/`TTSProvider`, tipos `AudioBuffer`/`Transcript`/`SynthesizeRequest`/`VoiceInfo` provider-agnostic, jerarquía de errores. 29 tests.
-- [ ] STT local: **Whisper** (faster-whisper) con modelos small/medium.
+- [x] STT local: **Whisper** (faster-whisper) — `WhisperSTTProvider` con modelos tiny/base/small/medium/large-v3, auto-detección CPU/GPU (int8/float16), resampling lineal a 16kHz, downmix mono, soporte WAV+PCM, traducción a inglés. 22 tests + 1 slow con modelo real.
 - [ ] TTS local: **Piper** (alta calidad, voces multi-idioma incluido español).
 - [ ] Wake word opcional: "Hey allAI" con `openWakeWord`.
 - [ ] Integración con PipeWire.

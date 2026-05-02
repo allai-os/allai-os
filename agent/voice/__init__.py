@@ -8,7 +8,7 @@ explícita.
 Submódulos:
   - types:     tipos provider-agnostic (AudioBuffer, Transcript, etc.).
   - provider:  interfaces abstractas STTProvider / TTSProvider.
-  - stt_whisper: implementación con faster-whisper — TODO.
+  - stt_whisper: implementación con faster-whisper.
   - tts_piper:   implementación con Piper — TODO.
   - wakeword:    detección de "Hey allAI" con openWakeWord — TODO.
   - pipewire:    captura/reproducción vía PipeWire — TODO.

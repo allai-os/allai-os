@@ -56,6 +56,13 @@ local-embeddings = [
     # Modelo preferido con GPU compatible (sm_75+): BAAI/bge-m3 (~570MB).
     "sentence-transformers>=3.0.0",
 ]
+voice = [
+    # STT 100% local con CTranslate2 (4x menos memoria, 2x más rápido que
+    # whisper de OpenAI). Modelo `base` ~140MB, `small` ~466MB, `medium`
+    # ~1.5GB. CPU usa int8; GPU usa float16.
+    "faster-whisper>=1.0.0",
+    "numpy>=1.26.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["core", "memory", "providers", "tools", "voice"]
