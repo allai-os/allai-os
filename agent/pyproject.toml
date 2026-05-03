@@ -64,6 +64,9 @@ voice = [
     # TTS 100% local con Piper. Voces multi-idioma (incluye español) en
     # https://huggingface.co/rhasspy/piper-voices. Inferencia ONNX en CPU.
     "piper-tts>=1.4.0",
+    # Wake-word "Hey allAI" 100% local. Modelos ONNX/TFLite ligeros.
+    # Bundled: alexa, hey jarvis, hey mycroft. Custom: rhasspy/openWakeWord.
+    "openwakeword>=0.4.0",
     "numpy>=1.26.0",
 ]
 

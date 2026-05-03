@@ -254,7 +254,7 @@ Implementar tools en `agent/tools/`. Cada tool: schema JSON + ejecutor + tests +
 - [x] Capa de abstracción `agent/voice/` — `STTProvider`/`TTSProvider`, tipos `AudioBuffer`/`Transcript`/`SynthesizeRequest`/`VoiceInfo` provider-agnostic, jerarquía de errores. 29 tests.
 - [x] STT local: **Whisper** (faster-whisper) — `WhisperSTTProvider` con modelos tiny/base/small/medium/large-v3, auto-detección CPU/GPU (int8/float16), resampling lineal a 16kHz, downmix mono, soporte WAV+PCM, traducción a inglés. 22 tests + 1 slow con modelo real.
 - [x] TTS local: **Piper** — `PiperTTSProvider`, una voz por instancia (.onnx + .json), inferencia ONNX en CPU/GPU, output WAV o PCM s16le, control de velocidad vía length_scale invertido, voice_id e idioma auto-inferidos del nombre del modelo. 27 tests con mocks (sin descarga de voces reales).
-- [ ] Wake word opcional: "Hey allAI" con `openWakeWord`.
+- [x] Wake word opcional: "Hey allAI" con `openWakeWord` — `WakewordDetector` con threshold por modelo, cooldown_seconds para evitar spam, validación estricta del input (PCM s16le 16kHz mono), múltiples modelos cargados en paralelo, reset() para sesiones limpias. 22 tests con mocks.
 - [ ] Integración con PipeWire.
 
 ---

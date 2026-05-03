@@ -10,7 +10,7 @@ Submódulos:
   - provider:  interfaces abstractas STTProvider / TTSProvider.
   - stt_whisper: implementación con faster-whisper.
   - tts_piper:   implementación con Piper.
-  - wakeword:    detección de "Hey allAI" con openWakeWord — TODO.
+  - wakeword:    detección de "Hey allAI" con openWakeWord.
   - pipewire:    captura/reproducción vía PipeWire — TODO.
 """
 
@@ -35,6 +35,13 @@ from voice.types import (
     TranscriptSegment,
     VoiceInfo,
 )
+from voice.wakeword import (
+    WakewordConfig,
+    WakewordDetector,
+    WakewordError,
+    WakewordEvent,
+    WakewordUnavailableError,
+)
 
 __all__ = [
     "AudioBuffer",
@@ -54,4 +61,10 @@ __all__ = [
     "UnsupportedVoiceError",
     "VoiceError",
     "VoiceInfo",
+    # wakeword
+    "WakewordConfig",
+    "WakewordDetector",
+    "WakewordError",
+    "WakewordEvent",
+    "WakewordUnavailableError",
 ]
