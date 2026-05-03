@@ -30,8 +30,8 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 
 - **Fecha de inicio**: 2026-04-28
 - **Fase activa**: L — Link
-- **Paso activo**: L.5 — Voz (entrada y salida) `[~]` (en curso).
-- **Próxima acción concreta**: implementar `agent/voice/wakeword.py` (openWakeWord para "Hey allAI") o `agent/voice/pipewire.py` (captura/reproducción).
+- **Paso activo**: L.5 completado. Próximo: fase L (Launch) — daemon `allaid` en Rust con D-Bus, o seguir con sandboxing/seguridad según prioridad.
+- **Próxima acción concreta**: arrancar fase **L** (Launch) — empezar por `system/allaid` en Rust o por la integración sandbox+permisos del agente Python.
 - **Última sesión**: 2026-05-02. **L.4 100% cerrado** con `memory/injector.py` (inyección de contexto en `ChatRequest` con delimitadores fuertes `<allai-memory-context>` y opt-in cloud para sensibles, 16 tests) + bug fix en `retrieval.py` (sanitización FTS5 vía `_to_fts_query` para queries con `?`/`:`/`*`). **L.5 arrancado**: `voice/` con interfaces abstractas `STTProvider`/`TTSProvider` + tipos provider-agnostic + 29 tests. **459 tests pasando**.
 - **Pendientes externos del usuario**:
   - [x] Dominio `allai-os.org` registrado.
@@ -247,7 +247,7 @@ Implementar tools en `agent/tools/`. Cada tool: schema JSON + ejecutor + tests +
 - [x] ADR-009 — política de memoria local cifrada (`docs/adr/0009-memoria-local-cifrada.md`).
 - [x] **Tests de seguridad explícitos**: no abre sin passphrase, mala passphrase rechazada, permisos malos rechazados, audit-log tampering detectado, PII bloquea export sin opt-in, injection patterns detectados, 32 tests de `tools.memory`.
 
-## L.5 — Voz (entrada y salida) `[~]` (en curso 2026-05-02)
+## L.5 — Voz (entrada y salida) `[x]` (completado 2026-05-03)
 
 **Tiempo: 4-5 días**
 
@@ -255,7 +255,7 @@ Implementar tools en `agent/tools/`. Cada tool: schema JSON + ejecutor + tests +
 - [x] STT local: **Whisper** (faster-whisper) — `WhisperSTTProvider` con modelos tiny/base/small/medium/large-v3, auto-detección CPU/GPU (int8/float16), resampling lineal a 16kHz, downmix mono, soporte WAV+PCM, traducción a inglés. 22 tests + 1 slow con modelo real.
 - [x] TTS local: **Piper** — `PiperTTSProvider`, una voz por instancia (.onnx + .json), inferencia ONNX en CPU/GPU, output WAV o PCM s16le, control de velocidad vía length_scale invertido, voice_id e idioma auto-inferidos del nombre del modelo. 27 tests con mocks (sin descarga de voces reales).
 - [x] Wake word opcional: "Hey allAI" con `openWakeWord` — `WakewordDetector` con threshold por modelo, cooldown_seconds para evitar spam, validación estricta del input (PCM s16le 16kHz mono), múltiples modelos cargados en paralelo, reset() para sesiones limpias. 22 tests con mocks.
-- [ ] Integración con PipeWire.
+- [x] Integración con PipeWire — `voice/pipewire.py` con `AudioCapture` (record síncrono + start_stream/stop_stream con callback) y `AudioPlayback` (PCM y WAV) sobre `sounddevice`/PortAudio. Soporta PipeWire moderno, PulseAudio y ALSA. `list_input_devices()`/`list_output_devices()` para introspección. 29 tests con mocks.
 
 ---
 

@@ -67,6 +67,10 @@ voice = [
     # Wake-word "Hey allAI" 100% local. Modelos ONNX/TFLite ligeros.
     # Bundled: alexa, hey jarvis, hey mycroft. Custom: rhasspy/openWakeWord.
     "openwakeword>=0.4.0",
+    # Captura/reproducción de audio. Habla con PipeWire vía la capa
+    # PulseAudio compat (Fedora 35+, Ubuntu 22.10+) o ALSA legacy.
+    # Requiere libportaudio2 en el sistema (dnf install portaudio).
+    "sounddevice>=0.4.6",
     "numpy>=1.26.0",
 ]
 

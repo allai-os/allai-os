@@ -11,7 +11,7 @@ Submódulos:
   - stt_whisper: implementación con faster-whisper.
   - tts_piper:   implementación con Piper.
   - wakeword:    detección de "Hey allAI" con openWakeWord.
-  - pipewire:    captura/reproducción vía PipeWire — TODO.
+  - pipewire:    captura/reproducción vía PipeWire (sounddevice/PortAudio).
 """
 
 from voice.provider import (
@@ -34,6 +34,18 @@ from voice.types import (
     Transcript,
     TranscriptSegment,
     VoiceInfo,
+)
+from voice.pipewire import (
+    AudioBackendUnavailableError,
+    AudioCapture,
+    AudioDevice,
+    AudioIOError,
+    AudioPlayback,
+    CaptureConfig,
+    PlaybackConfig,
+    is_available as audio_is_available,
+    list_input_devices,
+    list_output_devices,
 )
 from voice.wakeword import (
     WakewordConfig,
@@ -67,4 +79,15 @@ __all__ = [
     "WakewordError",
     "WakewordEvent",
     "WakewordUnavailableError",
+    # pipewire / audio I/O
+    "AudioBackendUnavailableError",
+    "AudioCapture",
+    "AudioDevice",
+    "AudioIOError",
+    "AudioPlayback",
+    "CaptureConfig",
+    "PlaybackConfig",
+    "audio_is_available",
+    "list_input_devices",
+    "list_output_devices",
 ]
