@@ -61,6 +61,9 @@ voice = [
     # whisper de OpenAI). Modelo `base` ~140MB, `small` ~466MB, `medium`
     # ~1.5GB. CPU usa int8; GPU usa float16.
     "faster-whisper>=1.0.0",
+    # TTS 100% local con Piper. Voces multi-idioma (incluye español) en
+    # https://huggingface.co/rhasspy/piper-voices. Inferencia ONNX en CPU.
+    "piper-tts>=1.4.0",
     "numpy>=1.26.0",
 ]
 
