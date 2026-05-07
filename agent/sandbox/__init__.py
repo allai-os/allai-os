@@ -9,6 +9,12 @@ Submódulos previstos (ver ROADMAP § Launch.5):
   - kill_switch: panic file watcher, señales, audit chain. TODO.
 """
 
+from sandbox.bwrap import (
+    BwrapNotAvailableError,
+    BwrapProfile,
+    build_bwrap_argv,
+    is_bwrap_available,
+)
 from sandbox.policy import (
     Capability,
     CapabilityGrant,
@@ -23,6 +29,8 @@ from sandbox.policy import (
 )
 
 __all__ = [
+    "BwrapNotAvailableError",
+    "BwrapProfile",
     "Capability",
     "CapabilityGrant",
     "CapabilityNotGrantedError",
@@ -32,5 +40,7 @@ __all__ = [
     "SandboxAuditEvent",
     "SandboxMode",
     "SandboxPolicy",
+    "build_bwrap_argv",
+    "is_bwrap_available",
     "mode_requires_confirmation",
 ]
