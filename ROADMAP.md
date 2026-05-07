@@ -29,10 +29,10 @@ Este archivo es **la fuente de verdad del proyecto**. Está diseñado para que c
 ## Estado actual
 
 - **Fecha de inicio**: 2026-04-28
-- **Fase activa**: L — Link
-- **Paso activo**: L.5 completado. Próximo: fase L (Launch) — daemon `allaid` en Rust con D-Bus, o seguir con sandboxing/seguridad según prioridad.
-- **Próxima acción concreta**: arrancar fase **L** (Launch) — empezar por `system/allaid` en Rust o por la integración sandbox+permisos del agente Python.
-- **Última sesión**: 2026-05-02. **L.4 100% cerrado** con `memory/injector.py` (inyección de contexto en `ChatRequest` con delimitadores fuertes `<allai-memory-context>` y opt-in cloud para sensibles, 16 tests) + bug fix en `retrieval.py` (sanitización FTS5 vía `_to_fts_query` para queries con `?`/`:`/`*`). **L.5 arrancado**: `voice/` con interfaces abstractas `STTProvider`/`TTSProvider` + tipos provider-agnostic + 29 tests. **459 tests pasando**.
+- **Fase activa**: L — Launch
+- **Paso activo**: **Launch.5 — Sandboxing y seguridad** `[~]` (en curso 2026-05-04). Decisión arquitectónica: arrancar Launch por sandbox antes que por el daemon `allaid` para que el daemon nazca dentro del sandbox, no se le encaje encima.
+- **Próxima acción concreta**: ADR-010 (modelo de sandboxing y consentimiento) + `docs/threat-model.md`. Después `agent/sandbox/policy.py` con tests puros.
+- **Última sesión**: 2026-05-04. Pull desde casa con todo L.4+L.5 (Link) cerrados. Sanity check: 452/459 tests verdes en Windows; los 25 fallos son por deps de voice no instaladas localmente y los 60 errores por sqlcipher3 sin wheel Windows — no hay regresiones. Diseño de Launch.5 aprobado: bubblewrap + seccomp BPF whitelist + SELinux enforcing + injection_screen (OCR + injection_guard sobre screenshots/web) + kill switch (hotkey + panic file + audit chain) + polkit con `auth_admin_keep` siempre.
 - **Pendientes externos del usuario**:
   - [x] Dominio `allai-os.org` registrado.
   - [x] Repo GitHub `git@github.com:allai-os/allai-os.git` creado y push exitoso (rebase con commit inicial de GitHub resuelto a favor de nuestro LICENSE).
@@ -307,15 +307,35 @@ Implementar tools en `agent/tools/`. Cada tool: schema JSON + ejecutor + tests +
 - [ ] Polkit rules para acciones que requieren root.
 - [ ] Vista "Activity Center" con todo lo que la IA ha hecho hoy.
 
-## L.5 — Sandboxing y seguridad `[ ]`
+## L.5 — Sandboxing y seguridad `[~]` (en curso 2026-05-04, security-first)
 
-**Tiempo: 1 semana**
+**Tiempo estimado: 10-13 días** (ampliado desde 1 semana original por defensa en profundidad — ver feedback "todos los pasos lo más seguros posibles aunque tomen más tiempo").
 
-- [ ] bubblewrap perfil por defecto: bind read-only de sistema, escritura sólo en `~`, sin red salvo lista blanca.
-- [ ] SELinux policy custom para `allaid`.
-- [ ] Detección de "prompt injection" en contenido de pantalla/web (heurísticas + clasificador).
-- [ ] Modo paranoid: cada acción confirmada.
-- [ ] Modo demo: dry-run, sólo simula.
+### Decisiones arquitectónicas
+- **Sandbox por default, no opt-in**: cada proceso del agente que ejecute acciones nace dentro de bubblewrap. No hay "fuera del sandbox".
+- **bubblewrap + seccomp BPF whitelist + SELinux enforcing** simultáneos (defensa en profundidad). Whitelist de syscalls, no blacklist.
+- **Detección de prompt injection en superficies de entrada** (no sólo en memoria): screenshots vía OCR, contenido web, archivos. Reusa `memory.injection_guard`.
+- **Modos paranoid / normal / demo**: paranoid confirma todo; normal es default; demo es dry-run.
+- **Kill switch redundante**: hotkey global + panic file con watcher 250ms + señal SIGUSR1, todos auditables.
+- **Polkit**: `auth_admin_keep` siempre — el usuario teclea contraseña en cada operación que requiere root, sin "trust this session".
+
+### Sub-pasos
+- [ ] Día 1: ADR-010 (modelo de sandboxing y consentimiento) + `docs/threat-model.md`.
+- [ ] Días 2-3: `agent/sandbox/policy.py` — `SandboxPolicy`, capabilities por sesión, modos. Tests puros.
+- [ ] Días 4-5: `agent/sandbox/bwrap.py` — generador de comandos bubblewrap parametrizado. Tests sobre args generados (no ejecuta bwrap real).
+- [ ] Día 6: `agent/sandbox/seccomp.py` — generador de filtro BPF (libseccomp). Tests sobre el filtro generado.
+- [ ] Día 7: `agent/sandbox/selinux.py` + `distro/selinux/allai.te` con dominio `allai_t` y transiciones. Carga sólo en VM.
+- [ ] Días 8-9: `agent/sandbox/injection_screen.py` — orquestador de OCR (Tesseract) + injection_guard sobre screenshots / HTML / archivos. Tests con imágenes sintéticas.
+- [ ] Día 10: `agent/sandbox/kill_switch.py` — panic file watcher, señales, audit con hash-chain. Hooks para hotkey (UI viene en Launch.3).
+- [ ] Día 11: `distro/polkit/org.allai.policy` con acciones granulares + tests de validación XML.
+- [ ] Día 12: integración con `agent/tools/*` — `ToolExecutor` consulta `SandboxPolicy` antes de ejecutar tools `dangerous`.
+- [ ] Día 13: actualizar ROADMAP, commit, push.
+
+### Dependencias nuevas
+- `pyseccomp` (Linux-only, wrap con import gates como sqlcipher3).
+- `python-prctl` (Linux-only).
+- `tesseract` (binario de sistema, dnf install) + `pytesseract` (wrapper).
+- `pillow` ya viene del prototipo, sube a deps principales.
 
 ---
 
