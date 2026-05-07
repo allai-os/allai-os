@@ -75,7 +75,7 @@ voice = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["core", "memory", "providers", "tools", "voice"]
+packages = ["core", "memory", "providers", "sandbox", "tools", "voice"]
 
 [tool.ruff]
 line-length = 100
