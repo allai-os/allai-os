@@ -1,0 +1,45 @@
+## <summary>Interfaces para módulos SELinux que interactúen con allAI.</summary>
+##
+## Este archivo expone macros que otros módulos pueden invocar para
+## conceder permisos limitados al/del dominio allai_t. Por ejemplo,
+## un módulo `allai-firefox` puede llamar `allai_use_data` para que
+## un proceso confinado de Firefox lea archivos generados por el
+## agente.
+##
+## Si no necesitas exponer interfaces a otros módulos, este archivo
+## puede quedar vacío. Lo dejamos con dos macros básicas que
+## probablemente queramos reusar.
+
+########################################
+## <summary>
+##  Permite a un dominio leer archivos de datos del agente.
+## </summary>
+## <param name="domain">
+##  <summary>Dominio destino que tendrá acceso de lectura.</summary>
+## </param>
+#
+interface(`allai_read_data',`
+    gen_require(`
+        type allai_data_t;
+    ')
+
+    read_files_pattern($1, allai_data_t, allai_data_t)
+    list_dirs_pattern($1, allai_data_t, allai_data_t)
+')
+
+########################################
+## <summary>
+##  Permite a un dominio enviar señales al daemon allai (por ejemplo,
+##  el kill switch que envía SIGUSR1 desde la extensión GNOME).
+## </summary>
+## <param name="domain">
+##  <summary>Dominio que enviará la señal.</summary>
+## </param>
+#
+interface(`allai_signal',`
+    gen_require(`
+        type allai_t;
+    ')
+
+    allow $1 allai_t:process signal;
+')

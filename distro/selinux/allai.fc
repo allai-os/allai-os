@@ -1,0 +1,17 @@
+# allAI OS SELinux file contexts
+#
+# Mapea paths del filesystem a tipos SELinux. Se aplica con `restorecon`
+# o `matchpathcon`. La instalación del paquete `allai-selinux` ejecuta
+# `restorecon -R /usr/lib/allai/ /usr/bin/allai*` para etiquetar.
+#
+# El formato es: <regex> [-tipo_archivo] gen_context(<contexto>)
+
+# Binarios del agente
+/usr/bin/allaid                     --      gen_context(system_u:object_r:allai_exec_t,s0)
+/usr/bin/allai-ctl                  --      gen_context(system_u:object_r:allai_exec_t,s0)
+/usr/lib/allai(/.*)?                        gen_context(system_u:object_r:allai_exec_t,s0)
+/usr/share/allai(/.*)?                      gen_context(system_u:object_r:allai_exec_t,s0)
+
+# Datos del usuario en su HOME
+HOME_DIR/\.local/share/allai(/.*)?          gen_context(unconfined_u:object_r:allai_data_t,s0)
+HOME_DIR/\.config/allai(/.*)?               gen_context(unconfined_u:object_r:allai_config_t,s0)

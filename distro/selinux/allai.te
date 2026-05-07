@@ -1,0 +1,165 @@
+## <summary>SELinux policy module para el agente allAI OS.</summary>
+##
+## Esta policy define los dominios y tipos del agente allAI:
+##
+##   - allai_t           — dominio del daemon `allaid` (cuando exista) y
+##                          del agente Python que lanza acciones.
+##   - allai_exec_t      — etiqueta del binario ejecutable del agente.
+##   - allai_data_t      — etiqueta de archivos persistentes en
+##                          ~/.local/share/allai/ (memoria, audit, etc.).
+##   - allai_config_t    — etiqueta de archivos de config en
+##                          ~/.config/allai/.
+##   - allai_sandboxed_t — dominio para procesos hijos confinados que
+##                          el agente lanza vía bubblewrap.
+##
+## Filosofía (alineada con ADR-005 / ADR-010 / docs/threat-model.md):
+##
+##   - **Default deny**: lo que no esté `allow` declarado, no se puede
+##     hacer. SELinux en `enforcing` rechaza syscalls aunque DAC las
+##     permitiría.
+##   - **Defensa en profundidad** sobre bwrap/seccomp: aunque el
+##     atacante escape esos namespaces, el dominio SELinux limita lo
+##     que puede hacer el proceso.
+##   - **Bloqueos explícitos** sobre tipos sensibles del usuario:
+##     ssh_home_t, gpg_secret_t, shadow_t, security_t. Sin `allow`
+##     hay denial; con `neverallow` un módulo futuro no puede
+##     accidentalmente conceder acceso.
+##
+## Esta policy es un **starting point**. Se expandirá conforme el
+## daemon y las herramientas reales aparezcan. La compilación y carga
+## sólo ocurre en Fedora/RHEL con `selinux-policy-devel`. En desarrollo
+## el módulo Python `agent/sandbox/selinux.py` lo trata como opcional
+## (logs warning si no está cargado).
+
+policy_module(allai, 0.1.0)
+
+########################################
+#
+# Declarations
+#
+########################################
+
+# Dominio principal del daemon. `init_daemon_domain` declara que es
+# spawneable por systemd y crea las transiciones automáticas desde
+# init_t cuando ejecuta el binario etiquetado `allai_exec_t`.
+type allai_t;
+type allai_exec_t;
+init_daemon_domain(allai_t, allai_exec_t)
+
+# Datos persistentes — memoria cifrada, audit log, salt, kill-events.
+# Marcados como user_home_content_t para que vivan dentro de $HOME del
+# usuario sin necesidad de transición especial.
+type allai_data_t;
+userdom_user_home_content(allai_data_t)
+
+# Config (preferencias, capabilities persistentes, etc.).
+type allai_config_t;
+userdom_user_home_content(allai_config_t)
+
+# Procesos confinados hijos. Cuando el agente lanza una herramienta
+# (shell, browser interno, computer use child) vía bwrap, el proceso
+# hijo transiciona a este dominio MÁS estricto.
+type allai_sandboxed_t;
+domain_type(allai_sandboxed_t)
+
+########################################
+#
+# allai_t local policy
+#
+########################################
+
+# El daemon necesita estos privilegios mínimos sobre sí mismo.
+allow allai_t self:process { fork sigchld signal };
+allow allai_t self:fifo_file rw_fifo_file_perms;
+allow allai_t self:unix_stream_socket create_stream_socket_perms;
+
+# Acceso a sus propios datos y config — full read/write.
+manage_dirs_pattern(allai_t, allai_data_t, allai_data_t)
+manage_files_pattern(allai_t, allai_data_t, allai_data_t)
+manage_dirs_pattern(allai_t, allai_config_t, allai_config_t)
+manage_files_pattern(allai_t, allai_config_t, allai_config_t)
+
+# Lectura del sistema base (binarios, libs, configs públicas).
+files_read_usr_files(allai_t)
+files_read_etc_files(allai_t)
+libs_use_ld_so(allai_t)
+libs_use_shared_libs(allai_t)
+miscfiles_read_localization(allai_t)
+
+# Necesario para ejecutar bwrap, python, herramientas del usuario.
+corecmd_exec_bin(allai_t)
+corecmd_exec_shell(allai_t)
+
+# Networking — el agente puede conectarse a APIs HTTPS de proveedores
+# (Claude, Gemini, Ollama local). El control fino por hostname vive
+# en bwrap/seccomp; aquí dejamos los puertos estándar.
+corenet_tcp_bind_generic_node(allai_t)
+corenet_tcp_connect_http_port(allai_t)
+corenet_tcp_connect_http_cache_port(allai_t)
+
+# Acceso a /dev/random y /dev/urandom para crypto.
+dev_read_rand(allai_t)
+dev_read_urand(allai_t)
+
+# Audit log: el agente escribe a su propio audit.jsonl que es
+# allai_data_t. NO puede escribir al audit del kernel (audit_t).
+logging_dontaudit_send_audit_msgs(allai_t)
+
+# Transiciones a procesos confinados via bwrap.
+domain_auto_trans(allai_t, bwrap_exec_t, allai_sandboxed_t)
+allow allai_t allai_sandboxed_t:process { transition signal sigkill };
+
+########################################
+#
+# allai_sandboxed_t — procesos hijos del agente
+#
+########################################
+
+# Mucho más estricto: estos procesos sólo pueden hacer lo que
+# explícitamente les damos.
+allow allai_sandboxed_t self:process { fork sigchld };
+allow allai_sandboxed_t self:fifo_file rw_fifo_file_perms;
+
+# Lectura del sistema base (heredan ld.so, libs).
+libs_use_ld_so(allai_sandboxed_t)
+libs_use_shared_libs(allai_sandboxed_t)
+files_read_usr_files(allai_sandboxed_t)
+files_read_etc_files(allai_sandboxed_t)
+
+# Acceso a los datos del agente sólo de lectura — el sandboxed no
+# puede modificar la memoria persistente.
+read_files_pattern(allai_sandboxed_t, allai_data_t, allai_data_t)
+read_files_pattern(allai_sandboxed_t, allai_config_t, allai_config_t)
+
+# /dev/random/urandom para crypto si lo necesita.
+dev_read_rand(allai_sandboxed_t)
+dev_read_urand(allai_sandboxed_t)
+
+# NO se le da networking por defecto — si la sesión tiene grant,
+# bwrap+seccomp lo desbloquean a nivel namespace y syscall, pero
+# SELinux también necesita ver `corenet_*` allow. Esto se hará
+# con una transición tagged-by-capability en una iteración futura
+# (TODO documentado en threat-model.md).
+
+########################################
+#
+# Bloqueos explícitos — neverallow
+#
+########################################
+
+# Estas reglas hacen que un módulo futuro no pueda accidentalmente
+# conceder acceso a tipos sensibles. Si alguien intenta `allow
+# allai_t shadow_t:file read;` el compilador rechaza el módulo.
+
+neverallow allai_t shadow_t:file *;
+neverallow allai_t ssh_home_t:file *;
+neverallow allai_t gpg_secret_t:file *;
+neverallow allai_t security_t:{ chr_file dir file } *;
+neverallow allai_t kernel_t:process *;
+
+neverallow allai_sandboxed_t shadow_t:file *;
+neverallow allai_sandboxed_t ssh_home_t:file *;
+neverallow allai_sandboxed_t gpg_secret_t:file *;
+neverallow allai_sandboxed_t security_t:{ chr_file dir file } *;
+neverallow allai_sandboxed_t allai_data_t:file write;
+neverallow allai_sandboxed_t allai_config_t:file write;
